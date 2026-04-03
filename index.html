@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Diag ERP">
+<meta name="theme-color" content="#0F1923">
+<title>Diagnostic ERP</title>
+<style>
+:root{--ink:#0F1923;--ink2:#1E2D3D;--ink3:#2E4260;--sky:#98C1D9;--paper:#F4F8FB;--white:#FFFFFF;--ok:#1A7A4A;--ok-bg:#E8F5EE;--warn:#B45309;--warn-bg:#FEF3C7;--danger:#B91C1C;--danger-bg:#FEE2E2;--accent:#0066CC;--r:10px;--rs:6px}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;background:var(--ink);font-family:'SF Pro Text','Helvetica Neue',Arial,sans-serif}
+#shell{display:flex;flex-direction:column;height:100%;background:var(--paper)}
+#topbar{background:var(--ink);flex-shrink:0;padding:env(safe-area-inset-top,14px) 16px 0}
+#topbar-inner{display:flex;align-items:center;gap:10px;padding-bottom:12px;border-bottom:1px solid var(--ink2)}
+#tlogo{width:32px;height:32px;border-radius:8px;background:var(--ink3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+#ttitle{flex:1;min-width:0}
+#ttitle h1{font-size:15px;font-weight:600;color:#fff}
+#ttitle p{font-size:11px;color:var(--sky);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ibtn{width:34px;height:34px;border-radius:8px;border:1px solid var(--ink3);background:transparent;color:var(--sky);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;font-family:inherit}
+.ibtn:active{background:var(--ink2)}
+#nav{display:flex;background:var(--ink);padding:0 8px 8px;gap:4px;flex-shrink:0;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+#nav::-webkit-scrollbar{display:none}
+.ntab{flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--ink3);background:transparent;color:var(--sky);cursor:pointer;white-space:nowrap;font-family:inherit}
+.ntab.active{background:#fff;color:var(--ink);border-color:#fff}
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;min-height:0}
+/* ── iPad responsive ── */
+@media(min-width:768px){
+  #shell{flex-direction:row;flex-wrap:nowrap}
+  #topbar{display:none}
+  #sidebar{
+    width:220px;flex-shrink:0;
+    background:var(--ink);
+    display:flex;flex-direction:column;
+    padding:env(safe-area-inset-top,20px) 0 env(safe-area-inset-bottom,20px);
+    overflow-y:auto;
+  }
+  #sidebar-top{padding:16px 16px 12px;border-bottom:1px solid var(--ink2);margin-bottom:8px}
+  #sidebar-logo{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+  #sidebar-logo .slogo{width:32px;height:32px;border-radius:8px;background:var(--ink3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+  #sidebar-logo h1{font-size:14px;font-weight:600;color:#fff}
+  #sidebar-sub{font-size:11px;color:var(--sky);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #sidebar-actions{display:flex;gap:6px;margin-top:10px}
+  #nav{
+    flex-direction:column;
+    padding:4px 10px;
+    gap:2px;
+    overflow-x:visible;
+    overflow-y:auto;
+    flex:1;
+  }
+  .ntab{
+    width:100%;text-align:left;
+    padding:9px 12px;border-radius:8px;
+    font-size:13px;
+    border-color:transparent;
+    background:transparent;
+    color:var(--sky);
+  }
+  .ntab.active{background:rgba(255,255,255,.12);color:#fff;border-color:transparent}
+  .ntab:hover:not(.active){background:rgba(255,255,255,.07)}
+  #sidebar-bottom{padding:12px 16px;border-top:1px solid var(--ink2);margin-top:auto}
+  #content{flex:1;min-width:0}
+  /* Largeur des cartes en mode iPad */
+  .card,.stats-bar,.piece-card,.cfg-sec,.exp-card{margin-left:20px;margin-right:20px}
+  .card+.card,.piece-card,.cfg-sec,.sec-block{margin-top:12px}
+  .piece-picker{grid-template-columns:repeat(auto-fill,minmax(160px,1fr))}
+  .bib-grid{grid-template-columns:repeat(auto-fill,minmax(90px,1fr))}
+  .pfield-row{gap:16px}
+}
+/* Bandeau installation */
+#install-banner{
+  display:none;
+  background:var(--accent);color:#fff;
+  padding:10px 16px;font-size:12px;
+  align-items:center;gap:10px;flex-shrink:0;
+  cursor:pointer;
+}
+#install-banner.show{display:flex}
+#install-banner strong{flex:1}
+#install-banner .ib-close{opacity:.7;font-size:16px;cursor:pointer;padding:4px}
+.card{background:#fff;border:1px solid #DDE6EE;border-radius:var(--r);margin:12px 12px 0;overflow:hidden}
+.form-row{display:flex;flex-direction:column;gap:4px;padding:11px 14px;border-bottom:1px solid #F0F4F8}
+.form-row:last-child{border-bottom:none}
+.form-row label{font-size:11px;font-weight:600;color:#8899AA;text-transform:uppercase;letter-spacing:.05em}
+.form-row input,.form-row select,.form-row textarea{font-size:14px;border:none;background:transparent;color:var(--ink);font-family:inherit;width:100%;-webkit-appearance:none;outline:none}
+.form-row textarea{resize:none;height:72px;line-height:1.5}
+.stats-bar{display:flex;background:#fff;border:1px solid #DDE6EE;border-radius:var(--r);overflow:hidden;margin:12px 12px 0}
+.sc{flex:1;padding:10px 6px;text-align:center;border-right:1px solid #EEF3F8}
+.sc:last-child{border-right:none}
+.sc-n{font-size:18px;font-weight:700;color:var(--ink)}
+.sc-l{font-size:9px;color:#8899AA;margin-top:3px;text-transform:uppercase;letter-spacing:.04em}
+.btn{padding:11px 14px;border-radius:var(--rs);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;display:inline-block}
+.btn-p{background:var(--ink);color:#fff}.btn-p:active{background:var(--ink2)}
+.btn-s{background:var(--paper);color:var(--ink);border:1px solid #DDE6EE}.btn-s:active{background:#E8ECF0}
+.del-b{width:24px;height:24px;border-radius:50%;border:1px solid #DDE6EE;background:transparent;color:#AABBCC;cursor:pointer;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:inherit;padding:0}
+.del-b:active{background:var(--danger-bg);color:var(--danger)}
+.tag{font-size:11px;padding:2px 9px;border-radius:10px;font-weight:600;display:inline-block}
+.tok{background:var(--ok-bg);color:var(--ok)}.twarn{background:var(--warn-bg);color:var(--warn)}
+.tdanger{background:var(--danger-bg);color:var(--danger)}.tinfo{background:#E6F0FF;color:#1044AA}
+.add-row{display:flex;align-items:center;gap:7px;width:100%;padding:10px 14px;background:transparent;border:none;font-size:13px;color:var(--accent);font-family:inherit;cursor:pointer;border-top:1px solid #F0F4F8;text-align:left}
+.add-row:active{background:#EEF6FF}
+.add-row .plus{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:300;flex-shrink:0}
+.rrow{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid #F0F4F8}
+.rrow:last-child{border-bottom:none}
+.rlbl{font-size:12px;font-weight:600;color:#6677AA;width:128px;flex-shrink:0;padding-top:2px}
+.rval{font-size:13px;color:var(--ink);flex:1;line-height:1.4}
+/* DIAGNOSTIC */
+.empty-state{display:flex;flex-direction:column;align-items:center;gap:16px;padding:60px 32px;text-align:center}
+.empty-state .big-icon{font-size:56px}
+.empty-state h2{font-size:18px;font-weight:600;color:var(--ink)}
+.empty-state p{font-size:14px;color:#8899AA;line-height:1.6}
+.piece-picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;padding:12px}
+.piece-opt{background:#fff;border:1.5px solid #DDE6EE;border-radius:var(--r);padding:16px 10px;text-align:center;cursor:pointer}
+.piece-opt:active{border-color:var(--accent);background:#EEF6FF}
+.piece-opt .po-icon{font-size:30px;margin-bottom:8px}
+.piece-opt .po-lbl{font-size:13px;font-weight:600;color:var(--ink)}
+.piece-card{background:#fff;border:1px solid #DDE6EE;border-radius:var(--r);margin:10px 12px 0;overflow:hidden}
+.piece-head{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:pointer;user-select:none}
+.ph-icon{font-size:20px;flex-shrink:0}
+.ph-name{flex:1;font-size:14px;font-weight:600;color:var(--ink)}
+.ph-surf{font-size:12px;color:#8899AA}
+.ph-chev{font-size:11px;color:#8899AA;transition:transform .2s;flex-shrink:0}
+.ph-chev.open{transform:rotate(180deg)}
+.piece-body{border-top:1px solid #EEF3F8;display:none}
+.piece-body.open{display:block}
+.piece-deleted .piece-head{opacity:.5}
+.piece-deleted .piece-body{display:none!important}
+.psec{border-bottom:1px solid #EEF3F8}
+.psec:last-child{border-bottom:none}
+.psec-head{display:flex;align-items:center;gap:8px;padding:10px 14px;cursor:pointer;user-select:none}
+.psh-icon{font-size:14px;flex-shrink:0}
+.psh-title{flex:1;font-size:13px;font-weight:600;color:var(--ink)}
+.psec-body{padding:4px 14px 10px;display:none}
+.psec-body.open{display:block}
+.pfield{display:flex;flex-direction:column;gap:4px;padding:8px 0;border-bottom:1px solid #F4F6F8}
+.pfield:last-child{border-bottom:none}
+.pfield label{font-size:11px;font-weight:600;color:#8899AA;text-transform:uppercase;letter-spacing:.04em}
+.pfield input,.pfield select,.pfield textarea{font-size:13px;padding:7px 9px;border:1px solid #DDE6EE;border-radius:var(--rs);background:var(--paper);color:var(--ink);font-family:inherit;-webkit-appearance:none;width:100%}
+.pfield input:focus,.pfield select:focus,.pfield textarea:focus{outline:none;border-color:var(--accent)}
+.pfield textarea{height:64px;resize:none;line-height:1.5}
+.pfield-row{display:flex;gap:8px}
+.pfield-row .pfield{flex:1}
+/* PLAN */
+.plan-drop{display:flex;flex-direction:column;align-items:center;gap:14px;padding:50px 24px;cursor:pointer;border:2px dashed #C8D8E8;border-radius:var(--r);margin:12px;background:var(--paper);text-align:center}
+.plan-tabs{display:flex;align-items:center;gap:6px;padding:8px 12px;background:#fff;border-bottom:1px solid #EEF3F8;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.plan-tabs::-webkit-scrollbar{display:none}
+.plan-tab{flex-shrink:0;padding:5px 14px;border-radius:16px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;border:1.5px solid #DDE6EE;background:var(--paper);color:var(--ink)}
+.plan-tab.active{border-color:var(--accent);background:var(--accent);color:#fff}
+.pcat-bar{display:flex;gap:6px;padding:10px 12px;background:#fff;border-bottom:1px solid #EEF3F8;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.pcat-bar::-webkit-scrollbar{display:none}
+.pcb{flex-shrink:0;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;border:1.5px solid #DDE6EE;background:var(--paper);color:#6677AA}
+.peq-bar{display:flex;gap:8px;padding:10px 12px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;border-bottom:1px solid #EEF3F8;background:#FAFBFC;min-height:86px;align-items:center}
+.peq-bar::-webkit-scrollbar{display:none}
+.peq{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 6px;border-radius:var(--r);cursor:pointer;flex-shrink:0;min-width:64px;text-align:center;border:1.5px solid #DDE6EE;background:#fff}
+.peq.sel{border-width:2px}
+.peq-em{font-size:26px;line-height:1}
+.peq-lb{font-size:10px;font-weight:600;color:var(--ink);max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#plan-scroll{overflow:auto;-webkit-overflow-scrolling:touch;background:#E8EDF2;position:relative}
+#plan-cw{position:relative;display:inline-block;min-width:100%;touch-action:none}
+#plan-cw img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;-webkit-user-select:none}
+.mkpin{position:absolute;transform:translate(-50%,-100%);cursor:pointer;display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 2px 5px rgba(0,0,0,.4))}
+.mkbub{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;border:3px solid;box-shadow:0 0 0 2px #fff}
+.plan-acts{display:flex;gap:6px;padding:8px 12px;border-top:1px solid #EEF3F8;flex-wrap:wrap;background:#fff;align-items:center}
+.pact{flex:1;min-width:60px;padding:8px 6px;border-radius:var(--rs);font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid #DDE6EE;background:var(--paper);color:var(--ink);white-space:nowrap;text-align:center}
+.pact:active{background:#E8ECF0}
+.pact.active-mode{background:var(--accent);color:#fff;border-color:var(--accent)}
+.pact.red{color:var(--danger);border-color:#FECACA}
+.pact.red:active{background:var(--danger-bg)}
+.plan-hint{font-size:12px;color:#8899AA;padding:7px 12px;text-align:center;border-top:1px solid #EEF3F8;transition:background .2s}
+.mklist-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #F0F4F8}
+.mklist-item:last-child{border-bottom:none}
+/* BIBLIO */
+.bib-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:8px}
+.bib-card{background:#fff;border:1.5px solid #DDE6EE;border-radius:var(--r);padding:10px 4px 8px;text-align:center;position:relative}
+.bib-em{font-size:26px;line-height:1;margin-bottom:5px}
+.bib-lb{font-size:10px;font-weight:600;color:var(--ink);line-height:1.3;padding:0 2px}
+/* CONFIG */
+.cfg-sec{background:#fff;border:1px solid #DDE6EE;border-radius:var(--r);margin-bottom:10px;overflow:hidden}
+.cfg-sec-head{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#FAFBFC;border-bottom:1px solid #EEF3F8}
+.cfg-field-row{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid #F4F6F8}
+.cfg-field-row:last-child{border-bottom:none}
+/* MODALS */
+.mback{position:fixed;inset:0;background:rgba(15,25,35,.55);display:none;align-items:flex-end;justify-content:center;z-index:200}
+.mback.show{display:flex}
+.mbox{width:100%;max-width:640px;background:#fff;border-radius:var(--r) var(--r) 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom,0px));max-height:88vh;overflow-y:auto}
+.mbox h3{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:16px}
+.mf{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.mf label{font-size:11px;font-weight:600;color:#8899AA;text-transform:uppercase;letter-spacing:.05em}
+.mf input,.mf select,.mf textarea{font-size:14px;padding:9px 11px;border:1px solid #DDE6EE;border-radius:var(--rs);background:var(--paper);color:var(--ink);font-family:inherit;-webkit-appearance:none;width:100%}
+.mf input:focus,.mf textarea:focus{outline:none;border-color:var(--accent)}
+.mf textarea{height:80px;resize:none;line-height:1.5}
+.macts{display:flex;gap:8px;margin-top:4px}
+.macts button{flex:1;padding:12px;border-radius:var(--rs);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;border:none}
+.mbok{background:var(--ink);color:#fff}.mbok:active{background:var(--ink2)}
+.mbcancel{background:var(--paper);color:#8899AA;border:1px solid #DDE6EE!important}
+.egrid{display:flex;flex-wrap:wrap;gap:6px}
+.eopt{width:40px;height:40px;border-radius:8px;border:1.5px solid #DDE6EE;background:var(--paper);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer}
+.eopt.sel{border-color:var(--accent);background:#EEF6FF;border-width:2px}
+.proj-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid #F0F4F8;cursor:pointer}
+.proj-row:last-child{border-bottom:none}
+.mclosebtn{width:100%;padding:12px;border-radius:var(--rs);background:var(--paper);border:1px solid #DDE6EE;font-size:14px;font-weight:600;color:#8899AA;font-family:inherit;cursor:pointer;margin-top:12px}
+.csv-pre{width:100%;height:120px;font-size:10px;font-family:monospace;padding:8px;border-radius:var(--rs);border:1px solid #DDE6EE;background:var(--paper);color:#4455AA;resize:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+@keyframes menuPop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.mk-ctx-menu button:active{background:#F4F8FB!important}
+.toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,16px) + 16px);left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;font-weight:500;pointer-events:none;transition:transform .25s,opacity .25s;opacity:0;z-index:300;white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* ── PLAN V2 : canvas natif ── */
+#plan-wrap{position:relative;flex:1;min-height:200px;overflow:hidden;background:#E8EDF2;touch-action:none;cursor:grab}
+#plan-canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
+.plan-hint{font-size:12px;color:#8899AA;padding:6px 12px;text-align:center;border-top:1px solid #EEF3F8}
+.pact{flex:1;min-width:60px;padding:8px 6px;border-radius:var(--rs);font-size:11px;font-weight:600;font-family:inherit;cursor:pointer;border:1px solid #DDE6EE;background:var(--paper);color:var(--ink);white-space:nowrap;text-align:center}
+.pact:active{background:#E8ECF0}
+.pact.red{color:var(--danger);border-color:#FECACA}
+#reposition-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:401;background:var(--accent);color:#fff;padding:14px 16px;align-items:center;justify-content:space-between;font-size:14px;font-weight:600;font-family:inherit;box-shadow:0 2px 12px rgba(0,0,0,.3)}
+#reposition-banner.show{display:flex}
+@keyframes menuPop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}
+.mk-ctx-menu button:active{background:#F4F8FB!important}
+
+</style>
+</head>
+<body>
+<div id="shell">
+  <div id="topbar"><div id="topbar-inner">
+    <div id="tlogo">📋</div>
+    <div id="ttitle"><h1>Diagnostic ERP</h1><p id="tsub">Nouveau projet</p></div>
+    <div style="display:flex;gap:6px;flex-shrink:0">
+      <button class="ibtn" onclick="openProjModal()">📁</button>
+      <button class="ibtn" onclick="newProject()">＋</button>
+    </div>
+  </div></div>
+  <!-- Bandeau installation app -->
+  <div id="install-banner">
+    <strong>📱 Installer l'app sur l'écran d'accueil</strong>
+    <span>Safari → Partager → "Sur l'écran d'accueil"</span>
+    <span class="ib-close" onclick="document.getElementById('install-banner').classList.remove('show');localStorage.setItem('ib_dismissed','1')">✕</span>
+  </div>
+  <!-- Sidebar iPad (visible ≥768px) -->
+  <div id="sidebar">
+    <div id="sidebar-top">
+      <div id="sidebar-logo">
+        <div class="slogo">📋</div>
+        <h1>Diagnostic ERP</h1>
+      </div>
+      <div id="sidebar-sub">Nouveau projet</div>
+      <div id="sidebar-actions">
+        <button class="ibtn" onclick="openProjModal()">📁</button>
+        <button class="ibtn" onclick="newProject()">＋</button>
+      </div>
+    </div>
+    <div id="nav">
+      <button class="ntab active" data-tab="identification">📋 Projet</button>
+      <button class="ntab" data-tab="diagnostic">🏗 Diagnostic</button>
+      <button class="ntab" data-tab="risques">⚠️ Risques</button>
+      <button class="ntab" data-tab="reglementation">⚖️ Réglementation</button>
+      <button class="ntab" data-tab="plan">🗺 Plan</button>
+      <button class="ntab" data-tab="biblio">🔧 Équipements</button>
+      <button class="ntab" data-tab="config">⚙️ Config</button>
+      <button class="ntab" data-tab="export">📤 Export CSV</button>
+    </div>
+    <div id="sidebar-bottom">
+      <div style="font-size:10px;color:var(--sky);opacity:.6">v10k · Diagnostic ERP</div>
+    </div>
+  </div>
+  <div id="content"></div>
+</div>
+
+<!-- MODAL PROJETS -->
+<div class="mback" id="m-proj"><div class="mbox">
+  <h3>Mes projets</h3><div id="proj-list"></div>
+  <button class="mclosebtn" onclick="closeM('m-proj')">Fermer</button>
+</div></div>
+
+<!-- MODAL MARQUEUR PLAN -->
+<div class="mback" id="m-mk"><div class="mbox">
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+    <div id="m-mk-em" style="font-size:36px"></div>
+    <div><div id="m-mk-lbl" style="font-size:15px;font-weight:700;color:var(--ink)"></div>
+    <div id="m-mk-cat" style="font-size:11px;color:#8899AA;margin-top:1px"></div></div>
+  </div>
+  <div class="mf"><label>Note / observation</label>
+    <textarea id="m-mk-note" placeholder="État, mesure, référence…"></textarea></div>
+  <div class="macts">
+    <button class="mbcancel" onclick="closeM('m-mk')">Annuler</button>
+    <button class="mbok" onclick="saveMk()">Enregistrer</button>
+  </div>
+</div></div>
+
+<!-- MODAL AJOUT/EDIT ÉQUIPEMENT -->
+<div class="mback" id="m-aeq"><div class="mbox">
+  <h3 id="aeq-title">Nouvel équipement</h3>
+  <div class="mf"><label>Nom</label>
+    <input id="aeq-name" type="text" placeholder="Ex : Détecteur de fumée…" oninput="aeqPreview()"></div>
+  <div class="mf"><label>Catégorie</label>
+    <select id="aeq-cat" onchange="aeqSugg();aeqPreview()">
+      <option value="fire">Incendie</option><option value="elec">Électricité</option>
+      <option value="plomb">Plomberie</option><option value="cvc">CVC</option>
+      <option value="alert">Attention</option>
+    </select></div>
+  <div class="mf"><label>Emoji <span style="font-size:11px;color:#8899AA;font-weight:400">(optionnel — 🔧 par défaut)</span></label>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <div id="aeq-big" style="font-size:38px;width:50px;text-align:center">🔧</div>
+      <input id="aeq-ei" type="text" placeholder="Coller un emoji…" maxlength="2"
+        style="flex:1;font-size:22px;text-align:center" oninput="aeqEmojiInput()">
+    </div>
+    <div style="font-size:11px;color:#8899AA;margin-bottom:6px">Suggestions :</div>
+    <div id="aeq-grid" class="egrid"></div></div>
+  <div class="mf"><label>Aperçu</label>
+    <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--paper);border-radius:var(--rs);border:1px solid #DDE6EE">
+      <div id="aeq-prev-b" style="font-size:28px;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#F3F4F6"></div>
+      <span id="aeq-prev-l" style="font-size:14px;font-weight:600;color:var(--ink)">—</span>
+    </div></div>
+  <div class="macts">
+    <button class="mbcancel" id="aeq-cancel" onclick="closeM('m-aeq')">Annuler</button>
+    <button class="mbok" id="aeq-ok" onclick="saveEquip()">Ajouter</button>
+  </div>
+</div></div>
+
+<!-- MODAL PIÈCE -->
+<div class="mback" id="m-piece"><div class="mbox">
+  <h3 id="m-piece-title">Ajouter une pièce</h3>
+  <div id="m-piece-body"></div>
+  <button class="mclosebtn" onclick="closeM('m-piece')">Annuler</button>
+</div></div>
+
+<!-- MODAL SECTION CONFIG -->
+<div class="mback" id="m-sec"><div class="mbox">
+  <h3 id="m-sec-title">Nouvelle section</h3>
+  <div class="mf"><label>Icône (emoji)</label>
+    <input id="sec-icon" type="text" maxlength="2" placeholder="Ex : 🔧" style="font-size:24px;text-align:center"></div>
+  <div class="mf"><label>Titre</label>
+    <input id="sec-title" type="text" placeholder="Ex : Équipements spéciaux"></div>
+  <div class="macts">
+    <button class="mbcancel" onclick="closeM('m-sec')">Annuler</button>
+    <button class="mbok" id="sec-ok" onclick="saveSec()">Créer</button>
+  </div>
+</div></div>
+
+<!-- MODAL CHAMP CONFIG -->
+<div class="mback" id="m-field"><div class="mbox">
+  <h3>Ajouter un champ</h3>
+  <div class="mf"><label>Libellé</label>
+    <input id="field-label" type="text" placeholder="Ex : Revêtement mural…"></div>
+  <div class="mf"><label>Type de réponse</label>
+    <select id="field-type" onchange="document.getElementById('field-opts-wrap').style.display=this.value==='select'?'block':'none'">
+      <option value="textarea">📝 Texte libre</option>
+      <option value="select">📋 Liste déroulante</option>
+      <option value="number">🔢 Nombre</option>
+      <option value="text">✍️ Texte court</option>
+    </select></div>
+  <div class="mf" id="field-opts-wrap" style="display:none"><label>Options (une par ligne)</label>
+    <textarea id="field-opts" placeholder="Option 1&#10;Option 2&#10;Option 3" style="height:100px"></textarea></div>
+  <div class="macts">
+    <button class="mbcancel" onclick="closeM('m-field')">Annuler</button>
+    <button class="mbok" onclick="saveField()">Ajouter</button>
+  </div>
+</div></div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// CONSTANTES
+// ══════════════════════════════════════════════════════
+const CAT={
+  fire: {label:'Incendie',    color:'#DC2626',bg:'#FEE2E2',light:'#FFF5F5'},
+  elec: {label:'Électricité', color:'#D97706',bg:'#FEF3C7',light:'#FFFDF0'},
+  plomb:{label:'Plomberie',   color:'#2563EB',bg:'#DBEAFE',light:'#F0F5FF'},
+  cvc:  {label:'CVC',         color:'#059669',bg:'#D1FAE5',light:'#F0FDF7'},
+  alert:{label:'Attention',   color:'#7C3AED',bg:'#EDE9FE',light:'#F8F5FF'},
+};
+const DEFEQUIP=[
+  {id:'eb',cat:'fire',emoji:'🔦',label:'BAES'},
+  {id:'ef',cat:'fire',emoji:'🧯',label:'Extincteur'},
+  {id:'es',cat:'fire',emoji:'🚨',label:'SSI / Centrale'},
+  {id:'ed',cat:'fire',emoji:'💨',label:'Désenfumage'},
+  {id:'eso',cat:'fire',emoji:'🚪',label:'Sortie secours'},
+  {id:'er',cat:'fire',emoji:'🚿',label:'RIA'},
+  {id:'edet',cat:'fire',emoji:'🔔',label:'Détecteur fumée'},
+  {id:'et',cat:'elec',emoji:'⚡',label:'TGBT'},
+  {id:'etab',cat:'elec',emoji:'🗂',label:'Tableau div.'},
+  {id:'eg',cat:'elec',emoji:'📦',label:'Gaine technique'},
+  {id:'ep',cat:'elec',emoji:'🔌',label:'Prise / attente'},
+  {id:'eco',cat:'elec',emoji:'📟',label:'Compteur ENEDIS'},
+  {id:'el',cat:'elec',emoji:'💡',label:'Éclairage'},
+  {id:'eef',cat:'plomb',emoji:'💧',label:'Arrivée EF'},
+  {id:'eeu',cat:'plomb',emoji:'🌀',label:'EU / EP'},
+  {id:'ewc',cat:'plomb',emoji:'🚽',label:'WC / Sanitaire'},
+  {id:'eecs',cat:'plomb',emoji:'♨️',label:'ECS / Chauffe-eau'},
+  {id:'ev',cat:'plomb',emoji:'🔩',label:'Nourrice / vanne'},
+  {id:'esp',cat:'cvc',emoji:'❄️',label:'Split / unité'},
+  {id:'evmc',cat:'cvc',emoji:'🌀',label:'VMC / bouche'},
+  {id:'epac',cat:'cvc',emoji:'🔄',label:'PAC / groupe ext.'},
+  {id:'eex',cat:'cvc',emoji:'🪟',label:'Exutoire'},
+  {id:'ech',cat:'cvc',emoji:'🌡',label:'Chauffage'},
+  {id:'efi',cat:'alert',emoji:'⚠️',label:'Fissure'},
+  {id:'ehu',cat:'alert',emoji:'💦',label:'Humidité'},
+  {id:'eam',cat:'alert',emoji:'☣️',label:'Suspect amiante'},
+  {id:'epl',cat:'alert',emoji:'🔺',label:'Suspect plomb'},
+  {id:'ede',cat:'alert',emoji:'🔴',label:'Dégradation'},
+  {id:'ein',cat:'alert',emoji:'🚧',label:'Inaccessible'},
+];
+const ESUGG={
+  fire: ['🔦','🧯','🚨','💨','🚪','🚿','🔔','🆘','🛑','🔥','📢','🧱'],
+  elec: ['⚡','🗂','📦','🔌','📟','💡','🔧','🖥','🔋','🛠','🔆','⚙️'],
+  plomb:['💧','🌀','🚽','♨️','🔩','🫙','🚰','🛁','🪣','💦','🌊','🔧'],
+  cvc:  ['❄️','🌀','🏭','🔄','🪟','🌡','💨','🌬','🌿','♻️','🔁','🌤'],
+  alert:['⚠️','💦','☣️','🔺','🔴','🚧','❗','🟠','💢','🔶','🪨','🔍'],
+};
+const PIECE_TYPES=[
+  {id:'vente',icon:'🛒',label:'Zone vente / accueil'},
+  {id:'reserve',icon:'📦',label:'Réserve / stockage'},
+  {id:'sanitaire',icon:'🚿',label:'Sanitaires / WC'},
+  {id:'bureau',icon:'🖥',label:'Bureau / vestiaire'},
+  {id:'cuisine',icon:'🍳',label:'Cuisine / préparation'},
+  {id:'circul',icon:'🚶',label:'Dégagement / circulation'},
+  {id:'local_tech',icon:'⚙️',label:'Local technique'},
+  {id:'vitrine',icon:'🏪',label:'Vitrine / devanture'},
+  {id:'custom',icon:'✏️',label:'Autre (nommer)'},
+];
+const PSEC_DEFAULT=[
+  {id:'dims',icon:'📐',title:'Dimensions',fields:[
+    {id:'l',label:'Longueur (m)',type:'number',step:'0.01',placeholder:'0.00'},
+    {id:'w',label:'Largeur (m)',type:'number',step:'0.01',placeholder:'0.00'},
+    {id:'h',label:'Hauteur sous plafond (m)',type:'number',step:'0.1',placeholder:'0.0'},
+  ]},
+  {id:'sol',icon:'🟫',title:'Sol',fields:[
+    {id:'revetement',label:'Revêtement existant',type:'select',
+     opts:['','Carrelage','Béton brut','Parquet','Sol souple LVT','Résine époxy','Béton ciré','Moquette','Inconnu']},
+    {id:'etat_sol',label:'État du support',type:'select',
+     opts:['','Bon état','Quelques irrégularités','Dégradé / fissures','Humidité / remontées']},
+    {id:'obs_sol',label:'Observations',type:'textarea',placeholder:'Notes libres sur le sol…'},
+    {id:'trav_sol',label:'Travaux souhaités',type:'textarea',placeholder:'Ex : dépose + ragréage + résine 120m²…'},
+  ]},
+  {id:'murs',icon:'🧱',title:'Murs & cloisons',fields:[
+    {id:'materiau',label:'Matériau murs porteurs',type:'select',
+     opts:['','Béton BA','Parpaing / brique','Maçonnerie pierre','Métal / poteau acier','Mixte','Inconnu']},
+    {id:'etat_mur',label:'État enduits / peinture',type:'select',
+     opts:['','Bon état','Fissures légères','Fissures structurelles','Enduits dégradés','Infiltrations']},
+    {id:'cloisons',label:'Cloisons — nature',type:'select',
+     opts:['','Placo simple peau','Placo double peau','Brique plâtrière','Carreaux de plâtre','Amovibles']},
+    {id:'pct_depose',label:'% cloisons à déposer',type:'select',
+     opts:['','0 % — tout déposer','< 25 %','25–50 %','50–75 %','> 75 % — conserver']},
+    {id:'isolation',label:'Isolation existante ?',type:'select',
+     opts:['','Oui — doublage en place','Non — mur nu','Ne sait pas']},
+    {id:'obs_mur',label:'Observations',type:'textarea',placeholder:'Notes libres…'},
+    {id:'trav_mur',label:'Travaux souhaités',type:'textarea',placeholder:'Ex : dépose cloisons 16ml + CF EI60 20ml…'},
+  ]},
+  {id:'plafond',icon:'⬜',title:'Plafond',fields:[
+    {id:'type_plaf',label:'Type de plafond',type:'select',
+     opts:['','Béton brut apparent','Dalles suspendues T24','Placo suspendu','Plafond tendu','Bois / lambris','Mixte']},
+    {id:'reseaux_plaf',label:'Réseaux apparents',type:'select',
+     opts:['','Non — vide technique','Oui — gaines apparentes','Oui — encastrés','Inconnu']},
+    {id:'obs_plaf',label:'Observations',type:'textarea',placeholder:'Notes libres…'},
+    {id:'trav_plaf',label:'Travaux souhaités',type:'textarea',placeholder:'Ex : dépose dalles T24 + placo 120m²…'},
+  ]},
+  {id:'menus',icon:'🚪',title:'Menuiseries',fields:[
+    {id:'nb_portes',label:'Nb portes standard',type:'number',placeholder:'0',step:'1'},
+    {id:'nb_cf60',label:'Nb portes CF EI60',type:'number',placeholder:'0',step:'1'},
+    {id:'nb_cf120',label:'Nb portes CF EI120',type:'number',placeholder:'0',step:'1'},
+    {id:'etat_menus',label:'État général',type:'select',
+     opts:['','Bon état','Usé — à remplacer partiellement','Tout à remplacer']},
+    {id:'obs_menus',label:'Observations',type:'textarea',placeholder:'Vitrines, placards, habillages…'},
+    {id:'trav_menus',label:'Travaux souhaités',type:'textarea',placeholder:'Ex : 3 blocs-porte CF EI60 + verrière 4ml…'},
+  ]},
+  {id:'reseaux_v',icon:'⚡',title:'Réseaux visibles',fields:[
+    {id:'elec_etat',label:'Éclairage / prises — état',type:'select',
+     opts:['','Bon état','À compléter','À remplacer','Absent']},
+    {id:'vmc_pres',label:'Bouche VMC présente ?',type:'select',
+     opts:['','Oui — fonctionnelle','Oui — à vérifier','Non']},
+    {id:'eau_pres',label:'Point d\'eau',type:'select',
+     opts:['','Aucun','Évier / lavabo en place','À créer']},
+    {id:'obs_res',label:'Observations',type:'textarea',placeholder:'Gaines, réseaux particuliers…'},
+  ]},
+  {id:'obs_gen',icon:'📝',title:'Observations générales',fields:[
+    {id:'obs_piece',label:'Notes libres',type:'textarea',placeholder:'Tout ce qui ne rentre pas ci-dessus…'},
+  ]},
+];
+const ERP_DENSITY={M:3,N:1,W:10,L:1,R:3,J:5,other:5};
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+let projects=[], currentId=null, currentTab='identification';
+let customEquip=[], editingEqId=null;
+let planActiveCat='fire', planActiveEqId=null;
+let tapMode=false, pendingTap=null, editingMkId=null;
+// planZoom/Rotation dans planState
+let aeqEmoji='🔧';
+let editingSecIdx=null, addingFieldSecIdx=null;
+
+function uid(){ return 'x'+Date.now()+Math.random().toString(36).slice(2,6); }
+
+function getPSEC(){
+  try{
+    const d=localStorage.getItem('erp_cfg');
+    if(d){const p=JSON.parse(d);if(Array.isArray(p)&&p.length)return p;}
+  }catch(e){}
+  return PSEC_DEFAULT.map(s=>JSON.parse(JSON.stringify(s)));
+}
+function savePSEC(cfg){
+  try{localStorage.setItem('erp_cfg',JSON.stringify(cfg));}catch(e){}
+}
+
+function mkPiece(typeId,customName){
+  const pt=PIECE_TYPES.find(p=>p.id===typeId)||PIECE_TYPES[0];
+  const data={};
+  getPSEC().forEach(s=>{data[s.id]={};(s.fields||[]).forEach(f=>{data[s.id][f.id]='';});});
+  return {id:uid(),typeId,icon:pt.icon,
+          label:typeId==='custom'?(customName||'Nouvelle pièce'):pt.label,
+          data,_deleted:false};
+}
+
+function mkProj(){
+  return {id:uid(),nom:'',mo:'',adresse:'',
+          date:new Date().toISOString().slice(0,10),
+          moe:'',phase:'ESQ',activite:'M',regime:'Propriétaire',notes:'',
+          pieces:[],risques:[],hsp:'',
+          plans:[{id:'p0',label:'RDC',imgSrc:null,markers:[]}],
+          currentPlanIdx:0};
+}
+
+function sv(){try{localStorage.setItem('erp',JSON.stringify(projects));}catch(e){}}
+function svEq(){try{localStorage.setItem('erpeq',JSON.stringify(customEquip));}catch(e){}}
+
+function loadAll(){
+  try{const d=localStorage.getItem('erp');if(d)projects=JSON.parse(d);}catch(e){projects=[];}
+  if(!projects.length)projects.push(mkProj());
+  // Migrer anciens projets sans plans
+  projects.forEach(p=>{
+    if(!p.plans){
+      p.plans=[{id:'p0',label:'RDC',imgSrc:p.planImgSrc||null,markers:p.planMarkers||[]}];
+      p.currentPlanIdx=0;
+      delete p.planImgSrc; delete p.planMarkers;
+    }
+    if(p.currentPlanIdx===undefined)p.currentPlanIdx=0;
+    if(!p.risques)p.risques=[];
+    if(!p.pieces)p.pieces=[];
+  });
+  currentId=projects[0].id;
+  try{const d=localStorage.getItem('erpeq');if(d)customEquip=JSON.parse(d);}catch(e){customEquip=[];}
+}
+
+function proj(){return projects.find(p=>p.id===currentId)||projects[0];}
+function curPlan(){
+  const p=proj();
+  const i=Math.min(p.currentPlanIdx||0,p.plans.length-1);
+  return p.plans[i];
+}
+function allEq(){return [...DEFEQUIP,...customEquip];}
+function eqById(id){const eq=allEq().find(e=>e.id===id);if(!eq)return null;const ov=loadEmojiOverrides();if(ov[id])return{...eq,emoji:ov[id]};return eq;}
+
+// ══════════════════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════════════════
+function showTab(tab){
+  currentTab=tab;
+  document.querySelectorAll('.ntab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  const c=document.getElementById('content');
+  c.scrollTop=0; c.innerHTML='';
+  c.style.cssText=''; // reset style plan
+  if(tab==='identification')renderIdent(c);
+  else if(tab==='diagnostic')renderDiag(c);
+  else if(tab==='risques')   renderRisques(c);
+  else if(tab==='reglementation')renderRegl(c);
+  else if(tab==='plan')      renderPlan(c);
+  else if(tab==='biblio')    renderBiblio(c);
+  else if(tab==='config')    renderConfig(c);
+  else if(tab==='export')    renderExport(c);
+}
+function updateTopbar(){
+  const p=proj();
+  const sub=(p.nom||'Nouveau projet')+(p.adresse?' · '+p.adresse:'');
+  const tsub=document.getElementById('tsub');
+  const ssub=document.getElementById('sidebar-sub');
+  if(tsub)tsub.textContent=sub;
+  if(ssub)ssub.textContent=sub;
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(t._to);t._to=setTimeout(()=>t.classList.remove('show'),2400);
+}
+function openM(id){document.getElementById(id).classList.add('show');}
+function closeM(id){document.getElementById(id).classList.remove('show');}
+
+// ══════════════════════════════════════════════════════
+// PROJETS
+// ══════════════════════════════════════════════════════
+function newProject(){
+  const p=mkProj();projects.unshift(p);currentId=p.id;sv();
+  showTab('identification');updateTopbar();toast('Nouveau projet créé');
+}
+function openProjModal(){
+  const list=document.getElementById('proj-list');list.innerHTML='';
+  projects.forEach(p=>{
+    const row=document.createElement('div');row.className='proj-row';
+    row.innerHTML=`<div><div style="font-size:14px;font-weight:500;color:var(--ink)">${p.nom||'(sans titre)'}</div><div style="font-size:11px;color:#8899AA;margin-top:2px">${p.date||''} · ${p.phase}</div></div><span style="font-size:12px;color:#8899AA">${(p.adresse||'').slice(0,20)}</span>`;
+    row.onclick=()=>{currentId=p.id;closeM('m-proj');showTab('identification');updateTopbar();};
+    list.appendChild(row);
+  });
+  openM('m-proj');
+}
+
+// ══════════════════════════════════════════════════════
+// IDENTIFICATION
+// ══════════════════════════════════════════════════════
+function renderIdent(c){
+  const p=proj();
+  const sb=document.createElement('div');sb.className='stats-bar';
+  const eff=effectif();
+  sb.innerHTML=`<div class="sc"><div class="sc-n">${calcSurfs().total.toFixed(0)}</div><div class="sc-l">m² total</div></div><div class="sc"><div class="sc-n">${eff||'—'}</div><div class="sc-l">personnes</div></div><div class="sc"><div class="sc-n">${categorie(eff)}</div><div class="sc-l">catégorie</div></div><div class="sc"><div class="sc-n">${p.pieces.filter(x=>!x._deleted).length}</div><div class="sc-l">pièces</div></div>`;
+  c.appendChild(sb);
+  const card=document.createElement('div');card.className='card';
+  [['Projet','text','nom','Intitulé du projet'],
+   ["Maître d'ouvrage",'text','mo','Nom / raison sociale'],
+   ['Adresse du site','text','adresse','Rue, code postal, ville'],
+   ['Date de visite','date','date',''],
+   ["Maître d'œuvre",'text','moe','Votre cabinet'],
+  ].forEach(([lbl,type,key,ph])=>{
+    const row=document.createElement('div');row.className='form-row';
+    row.innerHTML=`<label>${lbl}</label>`;
+    const inp=document.createElement('input');inp.type=type;inp.value=p[key]||'';inp.placeholder=ph;
+    inp.addEventListener('input',e=>{proj()[key]=e.target.value;sv();updateTopbar();});
+    row.appendChild(inp);card.appendChild(row);
+  });
+  // Phase
+  const rp=document.createElement('div');rp.className='form-row';
+  rp.innerHTML='<label>Phase</label>';
+  const sp=document.createElement('select');
+  ['ESQ','APS','APD','PRO','ACT','DET'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;if(p.phase===v)o.selected=true;sp.appendChild(o);});
+  sp.addEventListener('change',e=>{proj().phase=e.target.value;sv();});
+  rp.appendChild(sp);card.appendChild(rp);
+  // Activité
+  const ra=document.createElement('div');ra.className='form-row';
+  ra.innerHTML='<label>Activité future (Type ERP)</label>';
+  const sa=document.createElement('select');
+  [['M','M — Magasins'],['N','N — Restaurant'],['W','W — Bureaux'],['L','L — Spectacle'],['R','R — Enseignement'],['J','J — Pers. âgées'],['other','Autre']].forEach(([v,l])=>{const o=document.createElement('option');o.value=v;o.textContent=l;if(p.activite===v)o.selected=true;sa.appendChild(o);});
+  sa.addEventListener('change',e=>{proj().activite=e.target.value;sv();showTab('identification');});
+  ra.appendChild(sa);card.appendChild(ra);
+  // Régime
+  const rr=document.createElement('div');rr.className='form-row';
+  rr.innerHTML='<label>Régime de détention</label>';
+  const sr=document.createElement('select');
+  ['Propriétaire','Bail commercial','Bail précaire','À confirmer'].forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;if(p.regime===v)o.selected=true;sr.appendChild(o);});
+  sr.addEventListener('change',e=>{proj().regime=e.target.value;sv();});
+  rr.appendChild(sr);card.appendChild(rr);
+  // Notes
+  const rn=document.createElement('div');rn.className='form-row';
+  rn.innerHTML='<label>Notes libres</label>';
+  const tn=document.createElement('textarea');tn.placeholder='Observations générales…';tn.value=p.notes||'';
+  tn.addEventListener('input',e=>{proj().notes=e.target.value;sv();});
+  rn.appendChild(tn);card.appendChild(rn);
+  // HSP
+  const rh=document.createElement('div');rh.className='form-row';
+  rh.innerHTML='<label>Hauteur sous plafond moyenne (m)</label>';
+  const ih=document.createElement('input');ih.type='number';ih.step='0.1';ih.placeholder='3.0';ih.value=p.hsp||'';
+  ih.addEventListener('input',e=>{proj().hsp=e.target.value;sv();});
+  rh.appendChild(ih);card.appendChild(rh);
+  c.appendChild(card);
+  c.style.paddingBottom='20px';
+}
+
+// ══════════════════════════════════════════════════════
+// COMPUTED ERP
+// ══════════════════════════════════════════════════════
+function calcSurfs(){
+  let total=0,vente=0;
+  const p=proj();
+  // Calculer depuis les pièces (champ dims.l et dims.w)
+  p.pieces.filter(x=>!x._deleted).forEach((piece,i)=>{
+    const d=(piece.data&&piece.data.dims)||{};
+    const s=(parseFloat(d.l)||0)*(parseFloat(d.w)||0);
+    total+=s;
+    if(i===0||piece.typeId==='vente')vente=s;
+  });
+  return{total:+total.toFixed(2),vente:+vente.toFixed(2)};
+}
+function effectif(){
+  const{vente}=calcSurfs();
+  return vente>0?Math.ceil(vente/(ERP_DENSITY[proj().activite]||5)):0;
+}
+function categorie(eff){
+  if(!eff)return'—';
+  if(eff>1500)return'Cat. 1';if(eff>700)return'Cat. 2';
+  if(eff>300)return'Cat. 3';if(eff>200)return'Cat. 4';
+  return'Cat. 5';
+}
+
+// ══════════════════════════════════════════════════════
+// DIAGNOSTIC PAR PIÈCE
+// ══════════════════════════════════════════════════════
+function renderDiag(c){
+  const p=proj();
+  if(!p.pieces.length){
+    const es=document.createElement('div');es.className='empty-state';
+    es.innerHTML='<div class="big-icon">🏗</div><h2>Aucune pièce relevée</h2><p>Commencez par ajouter les pièces que vous visitez sur site.</p>';
+    const btn=document.createElement('button');btn.className='btn btn-p';btn.style.marginTop='4px';btn.textContent='+ Ajouter une pièce';
+    btn.onclick=openPiecePicker;
+    es.appendChild(btn);c.appendChild(es);
+  } else {
+    p.pieces.forEach(piece=>c.appendChild(makePieceCard(piece,p)));
+    const ab=document.createElement('button');
+    ab.className='btn btn-s';ab.style.cssText='margin:12px;display:flex;align-items:center;gap:8px;width:calc(100% - 24px)';
+    ab.innerHTML='<span style="font-size:18px">+</span> Ajouter une pièce';
+    ab.onclick=openPiecePicker;c.appendChild(ab);
+  }
+  c.style.paddingBottom='20px';
+}
+
+function openPiecePicker(){
+  const body=document.getElementById('m-piece-body');
+  document.getElementById('m-piece-title').textContent='Choisir une pièce';
+  body.innerHTML='';
+  const grid=document.createElement('div');grid.className='piece-picker';
+  PIECE_TYPES.forEach(pt=>{
+    const opt=document.createElement('div');opt.className='piece-opt';
+    opt.innerHTML=`<div class="po-icon">${pt.icon}</div><div class="po-lbl">${pt.label}</div>`;
+    opt.onclick=()=>{
+      if(pt.id==='custom'){
+        body.innerHTML='';
+        const ttl=document.createElement('h3');ttl.style.cssText='font-size:15px;font-weight:700;color:var(--ink);margin-bottom:16px';ttl.textContent='Nommer la pièce';
+        const mf=document.createElement('div');mf.className='mf';
+        mf.innerHTML='<label>Nom de la pièce</label>';
+        const inp=document.createElement('input');inp.type='text';inp.placeholder='Ex : Salle de réunion…';
+        mf.appendChild(inp);
+        const macts=document.createElement('div');macts.className='macts';
+        const back=document.createElement('button');back.className='mbcancel';back.textContent='← Retour';back.onclick=openPiecePicker;
+        const ok=document.createElement('button');ok.className='mbok';ok.textContent='Créer';
+        ok.onclick=()=>{addPiece('custom',inp.value.trim()||'Nouvelle pièce');};
+        macts.appendChild(back);macts.appendChild(ok);
+        body.appendChild(ttl);body.appendChild(mf);body.appendChild(macts);
+      } else {
+        addPiece(pt.id);
+      }
+    };
+    grid.appendChild(opt);
+  });
+  body.appendChild(grid);openM('m-piece');
+}
+
+function addPiece(typeId,customName){
+  const piece=mkPiece(typeId,customName);
+  proj().pieces.push(piece);sv();
+  closeM('m-piece');showTab('diagnostic');
+}
+
+function makePieceCard(piece,p){
+  const block=document.createElement('div');block.className='piece-card';
+  if(piece._deleted)block.classList.add('piece-deleted');
+
+  // En-tête
+  const head=document.createElement('div');head.className='piece-head';
+  const d=(piece.data&&piece.data.dims)||{};
+  const surf=(parseFloat(d.l)||0)*(parseFloat(d.w)||0);
+  head.innerHTML=`<div class="ph-icon">${piece.icon}</div><div class="ph-name">${piece.label}</div><div class="ph-surf">${surf?surf.toFixed(1)+' m²':''}</div><span class="ph-chev open">▼</span>`;
+
+  const body=document.createElement('div');body.className='piece-body open';
+
+  // Barre outils pièce
+  const toolbar=document.createElement('div');
+  toolbar.style.cssText='display:flex;align-items:center;gap:6px;padding:8px 14px;border-bottom:1px solid #EEF3F8;background:#FAFBFC';
+
+  const renInp=document.createElement('input');
+  renInp.style.cssText='font-size:13px;font-weight:600;color:var(--ink);border:1px solid #DDE6EE;border-radius:var(--rs);padding:5px 8px;flex:1;font-family:inherit;background:var(--paper)';
+  renInp.value=piece.label;renInp.placeholder='Nom de la pièce…';
+  renInp.addEventListener('input',e=>{piece.label=e.target.value;sv();head.querySelector('.ph-name').textContent=e.target.value;});
+
+  // Dupliquer
+  const dupBtn=document.createElement('button');dupBtn.className='del-b';
+  dupBtn.style.cssText='color:var(--accent);border-color:#BDD7EE;font-size:16px';
+  dupBtn.title='Dupliquer';dupBtn.textContent='⎘';
+  dupBtn.onclick=e=>{
+    e.stopPropagation();
+    const copy=JSON.parse(JSON.stringify(piece));
+    copy.id=uid();copy.label=piece.label+' (copie)';copy._deleted=false;
+    const idx=p.pieces.indexOf(piece);
+    p.pieces.splice(idx+1,0,copy);sv();showTab('diagnostic');toast('Pièce dupliquée ✓');
+  };
+
+  // Soft-delete / restaurer
+  const delBtn=document.createElement('button');delBtn.className='del-b';
+  if(piece._deleted){
+    delBtn.style.cssText='color:var(--ok);border-color:#A7F3D0';
+    delBtn.title='Restaurer';delBtn.textContent='↺';
+  } else {
+    delBtn.style.cssText='color:var(--danger);border-color:#FECACA';
+    delBtn.title='Masquer / supprimer';delBtn.textContent='🗑';
+  }
+  delBtn.onclick=e=>{
+    e.stopPropagation();
+    piece._deleted=!piece._deleted;sv();showTab('diagnostic');
+    toast(piece._deleted?'Pièce masquée — ↺ pour restaurer':'Pièce restaurée ✓');
+  };
+
+  toolbar.appendChild(renInp);toolbar.appendChild(dupBtn);toolbar.appendChild(delBtn);
+  body.appendChild(toolbar);
+
+  // Sous-sections depuis config
+  getPSEC().forEach(sec=>{
+    if(!sec||!sec.id||!Array.isArray(sec.fields))return;
+    if(!piece.data)piece.data={};
+    if(!piece.data[sec.id])piece.data[sec.id]={};
+    const data=piece.data[sec.id];
+
+    const psec=document.createElement('div');psec.className='psec';
+    const psh=document.createElement('div');psh.className='psec-head';
+    psh.innerHTML=`<span class="psh-icon">${sec.icon||'📋'}</span><span class="psh-title">${sec.title||''}</span><span class="ph-chev open" style="font-size:11px;color:#8899AA">▼</span>`;
+    const psb=document.createElement('div');psb.className='psec-body open';
+
+    const fields=sec.fields||[];
+    let i=0;
+    while(i<fields.length){
+      const f=fields[i];
+      if(!f||!f.id){i++;continue;}
+      // Grouper les deux premiers champs number côte à côte
+      const next=fields[i+1];
+      if(f.type==='number'&&next&&next.type==='number'&&i<2){
+        const row=document.createElement('div');row.className='pfield-row';
+        [f,next].forEach(field=>{
+          const pf=document.createElement('div');pf.className='pfield';
+          const lf=document.createElement('label');lf.textContent=field.label||'';
+          const inp=document.createElement('input');
+          inp.type='number';inp.step=field.step||'0.01';
+          inp.placeholder=field.placeholder||'0';inp.value=data[field.id]||'';
+          inp.addEventListener('input',e=>{
+            data[field.id]=e.target.value;sv();
+            // Màj surface si les 2 premiers champs number
+            const flds=fields.filter(x=>x.type==='number');
+            if(flds.length>=2){
+              const s=(parseFloat(data[flds[0].id])||0)*(parseFloat(data[flds[1].id])||0);
+              if(s)head.querySelector('.ph-surf').textContent=s.toFixed(1)+' m²';
+            }
+          });
+          pf.appendChild(lf);pf.appendChild(inp);row.appendChild(pf);
+        });
+        psb.appendChild(row);i+=2;continue;
+      }
+      // Champ standard
+      const pf=document.createElement('div');pf.className='pfield';
+      const lf=document.createElement('label');lf.textContent=f.label||'';
+      let inp;
+      if(f.type==='select'){
+        inp=document.createElement('select');
+        (f.opts||['',f.label||'']).forEach(o=>{
+          const op=document.createElement('option');op.value=o;op.textContent=o||'—';
+          if((data[f.id]||'')===o)op.selected=true;inp.appendChild(op);
+        });
+        inp.addEventListener('change',e=>{data[f.id]=e.target.value;sv();});
+      } else if(f.type==='textarea'){
+        inp=document.createElement('textarea');
+        inp.placeholder=f.placeholder||'';inp.value=data[f.id]||'';
+        inp.addEventListener('input',e=>{data[f.id]=e.target.value;sv();});
+      } else {
+        inp=document.createElement('input');inp.type=f.type||'text';
+        if(f.step)inp.step=f.step;
+        inp.placeholder=f.placeholder||'';inp.value=data[f.id]||'';
+        inp.addEventListener('input',e=>{data[f.id]=e.target.value;sv();});
+      }
+      pf.appendChild(lf);pf.appendChild(inp);psb.appendChild(pf);i++;
+    }
+
+    psh.onclick=()=>{psb.classList.toggle('open');psh.querySelector('.ph-chev').classList.toggle('open');};
+    psec.appendChild(psh);psec.appendChild(psb);body.appendChild(psec);
+  });
+
+  // Toggle header
+  head.onclick=e=>{
+    if(e.target===renInp||e.target===dupBtn||e.target===delBtn)return;
+    if(piece._deleted)return;
+    body.classList.toggle('open');head.querySelector('.ph-chev').classList.toggle('open');
+  };
+  block.appendChild(head);block.appendChild(body);
+  return block;
+}
+
+// ══════════════════════════════════════════════════════
+// RISQUES
+// ══════════════════════════════════════════════════════
+function renderRisques(c){
+  const p=proj();
+  if(!p.risques)p.risques=[];
+  const INIT=['Amiante — diagnostic disponible ?','Plomb / CREP ?',
+    'Accès benne / livraisons','Voisinage sensible',
+    'Local libre pendant travaux ?','Plans existants ?',
+    "Date d'ouverture souhaitée",'Assurance DO'];
+  if(!p.risques.length){INIT.forEach(l=>p.risques.push({id:uid(),label:l,etat:'',checked:false}));sv();}
+  const card=document.createElement('div');card.className='card';
+  p.risques.forEach(r=>card.appendChild(makeRisqueRow(r,p.risques)));
+  const ab=document.createElement('button');ab.className='add-row';
+  ab.innerHTML='<span class="plus">+</span> Ajouter un point';
+  ab.onclick=()=>{
+    const r={id:uid(),label:'',etat:'',checked:false};
+    p.risques.push(r);sv();card.insertBefore(makeRisqueRow(r,p.risques),ab);
+  };
+  card.appendChild(ab);c.appendChild(card);c.style.paddingBottom='20px';
+}
+function makeRisqueRow(r,ri){
+  const row=document.createElement('div');
+  row.style.cssText='display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:1px solid #F0F4F8';
+  const chk=document.createElement('div');
+  chk.style.cssText=`width:22px;height:22px;border-radius:6px;border:1.5px solid ${r.checked?'var(--ok)':'#C0CDD8'};background:${r.checked?'var(--ok)':'#fff'};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;margin-top:1px;color:#fff;font-size:13px`;
+  chk.textContent=r.checked?'✓':'';
+  chk.onclick=()=>{r.checked=!r.checked;sv();chk.textContent=r.checked?'✓':'';chk.style.background=r.checked?'var(--ok)':'#fff';chk.style.borderColor=r.checked?'var(--ok)':'#C0CDD8';};
+  const cont=document.createElement('div');cont.style.cssText='flex:1;min-width:0;display:flex;flex-direction:column;gap:4px';
+  const li=document.createElement('input');li.style.cssText='font-size:13px;font-weight:500;color:var(--ink);border:none;background:transparent;width:100%;font-family:inherit;outline:none';
+  li.value=r.label;li.placeholder='Point de vigilance…';
+  li.addEventListener('input',e=>{r.label=e.target.value;sv();});
+  const ei=document.createElement('input');ei.style.cssText='font-size:12px;color:#8899AA;border:none;background:transparent;width:100%;font-family:inherit;outline:none';
+  ei.value=r.etat||'';ei.placeholder='Observation…';
+  ei.addEventListener('input',e=>{r.etat=e.target.value;sv();});
+  cont.appendChild(li);cont.appendChild(ei);
+  const db=document.createElement('button');db.className='del-b';db.textContent='×';
+  db.onclick=()=>{ri.splice(ri.indexOf(r),1);sv();row.remove();};
+  row.appendChild(chk);row.appendChild(cont);row.appendChild(db);
+  return row;
+}
+
+// ══════════════════════════════════════════════════════
+// RÉGLEMENTATION
+// ══════════════════════════════════════════════════════
+function renderRegl(c){
+  const p=proj(),eff=effectif(),cat=categorie(eff),{total,vente}=calcSurfs();
+  const dn=ERP_DENSITY[p.activite]||5;
+  const tmap={M:'Magasins',N:'Restaurants/cafés',W:'Bureaux',L:'Spectacle',R:'Enseignement',J:'Pers. âgées',other:'Autre'};
+  const deg=eff<=50?'1 sortie min. L≥0.90m':eff<=100?'1 sortie + 1 dégagement':'≥2 sorties L≥1.40m';
+  const ssi=cat==='Cat. 5'?'Type 4 simplifié — alarme + BAES':cat==='—'?'—':(cat==='Cat. 4'||cat==='Cat. 3')?'SSI Type 2b/2a':'SSI Type 1 + CMSI';
+  const comm=cat==='Cat. 5'?'Déclaration mairie — pas de visite obligatoire':cat==='—'?'—':'Visite commission obligatoire avant ouverture';
+  const pmr=cat==='Cat. 5'?'WC PMR recommandé (non oblig.)':'WC PMR obligatoire — 1.50×2.10m';
+  const auth=total>=500?'Permis de Construire probable (≥500m²)':total>0?'Déclaration Préalable probable (<500m²)':'Saisir les pièces d\'abord';
+  const rows=[
+    ['Type ERP',`<span class="tag tinfo">${tmap[p.activite]||p.activite}</span>`,''],
+    ['Règle densité',`1 pers. / ${dn} m²`,''],
+    ['Surface vente',`${vente.toFixed(2)} m²`,''],
+    ['Effectif calc.',`<strong>${eff}</strong> personnes`,'Art. GN8'],
+    ['Catégorie ERP',`<span class="tag ${cat==='—'?'tinfo':cat==='Cat. 5'?'tok':'twarn'}">${cat}</span>`,'Auto'],
+    ['Dégagements',deg,'CO 36-38'],
+    ['Désenfumage',(p.activite==='M'||p.activite==='N')?'<span class="tag twarn">Obligatoire</span> — naturel ou mécanique':'Vérifier selon type','Art. DF'],
+    ['SSI / Alarme',ssi,'NF S 61-931'],
+    ['BAES','<span class="tag tdanger">Obligatoires</span> tous dégagements — 1h','NF C71-830'],
+    ['WC PMR',pmr,'Arrêté 2017'],
+    ['Porte accès','Largeur utile min. 0.90m','PMR'],
+    ['AT ERP','<span class="tag tdanger">Obligatoire</span> avant travaux','L.111-8 CCH'],
+    ['Commission sécu.',comm,'CCH'],
+    ['Bureau contrôle','<span class="tag tdanger">Obligatoire</span> — Mission L+S','L.111-23 CCH'],
+    ['Autorisation',auth,'Code Urbanisme'],
+    ['SPS','Obligatoire si ≥2 entreprises','Décret 94-1159'],
+  ];
+  const card=document.createElement('div');card.className='card';
+  rows.forEach(([l,v,ref])=>{
+    const row=document.createElement('div');row.className='rrow';
+    row.innerHTML=`<span class="rlbl">${l}</span><span class="rval">${v}${ref?`<span style="font-size:10px;color:#AABBCC;margin-left:6px">${ref}</span>`:''}</span>`;
+    card.appendChild(row);
+  });
+  c.appendChild(card);c.style.paddingBottom='20px';
+}
+
+// ══════════════════════════════════════════════════════
+// PLAN ANNOTÉ — MULTI-ÉTAGE + ZOOM + FIX TAP
+// ══════════════════════════════════════════════════════
+function renderPlan(c){
+  const p=proj();
+  c.style.cssText='display:flex;flex-direction:column;height:100%';
+  const planIdx=Math.min(p.currentPlanIdx||0,p.plans.length-1);
+  const plan=p.plans[planIdx];
+
+  // Onglets étages
+  const tabs=document.createElement('div');tabs.className='plan-tabs';
+  tabs.style.cssText='display:flex;align-items:center;gap:6px;padding:8px 12px;background:#fff;border-bottom:1px solid #EEF3F8;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;flex-shrink:0';
+  p.plans.forEach((pl,i)=>{
+    const tb=document.createElement('button');tb.className='plan-tab'+(i===planIdx?' active':'');
+    tb.textContent=pl.label;
+    tb.onclick=()=>{p.currentPlanIdx=i;sv();showTab('plan');};
+    tabs.appendChild(tb);
+  });
+  const addPlanBtn=document.createElement('button');
+  addPlanBtn.style.cssText='flex-shrink:0;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--accent);background:transparent;color:var(--accent);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;font-family:inherit;padding:0';
+  addPlanBtn.textContent='+';
+  addPlanBtn.onclick=()=>{
+    const lbl=prompt('Nom du niveau :','R+1');if(!lbl)return;
+    p.plans.push({id:uid(),label:lbl,imgSrc:null,markers:[]});
+    p.currentPlanIdx=p.plans.length-1;sv();showTab('plan');
+  };
+  tabs.appendChild(addPlanBtn);
+  c.appendChild(tabs);
+
+  if(!plan.imgSrc){
+    const dz=document.createElement('div');dz.className='plan-drop';
+    dz.style.cssText='display:flex;flex-direction:column;align-items:center;gap:14px;padding:50px 24px;cursor:pointer;border:2px dashed #C8D8E8;border-radius:var(--r);margin:12px;background:var(--paper);text-align:center';
+    dz.innerHTML=`<div style="font-size:52px">🗺</div><p style="font-size:14px;color:#8899AA;line-height:1.6"><strong style="color:var(--ink)">Importer le plan — ${plan.label}</strong><br>Photo iPad · JPEG · PNG · HEIC</p><label style="display:inline-block;background:var(--ink);color:#fff;padding:11px 24px;border-radius:var(--rs);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;position:relative">Choisir un fichier<input type="file" accept="image/*" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer" onchange="if(this.files[0])loadPlanFile(this.files[0])"></label><p style="font-size:11px;color:#AABBCC">JPEG · PNG · HEIC</p>`;
+    if(p.plans.length>1){
+      const rm=document.createElement('button');rm.className='btn btn-s';rm.style.cssText='margin-top:8px;color:var(--danger)';rm.textContent='🗑 Supprimer ce niveau';
+      rm.onclick=()=>{if(!confirm('Supprimer ?'))return;p.plans.splice(planIdx,1);p.currentPlanIdx=Math.max(0,planIdx-1);sv();showTab('plan');};
+      dz.appendChild(rm);
+    }
+    c.appendChild(dz);return;
+  }
+
+  // Catégories
+  const catBar=document.createElement('div');catBar.className='pcat-bar';
+  catBar.style.flexShrink='0';
+  Object.entries(CAT).forEach(([cat,meta])=>{
+    const on=cat===planActiveCat;
+    const btn=document.createElement('button');btn.className='pcb';btn.dataset.cat=cat;
+    btn.style.cssText=`border-color:${on?meta.color:'#DDE6EE'};background:${on?meta.color:meta.light};color:${on?'#fff':meta.color}`;
+    btn.textContent=meta.label;
+    btn.onclick=()=>{planActiveCat=cat;planActiveEqId=null;refreshEqBar();};
+    catBar.appendChild(btn);
+  });
+  c.appendChild(catBar);
+
+  // Équipements
+  const eqBar=document.createElement('div');eqBar.className='peq-bar';eqBar.id='peqbar';eqBar.style.flexShrink='0';
+  buildEqBar(eqBar);c.appendChild(eqBar);
+
+  // Canvas wrapper
+  const wrap=document.createElement('div');wrap.id='plan-wrap';
+  const canvas=document.createElement('canvas');canvas.id='plan-canvas';
+  wrap.appendChild(canvas);c.appendChild(wrap);
+
+  // Hint
+  const hint=document.createElement('div');hint.className='plan-hint';hint.style.flexShrink='0';
+  hint.id='plan-hint';
+  hint.textContent='Choisissez un équipement pour le placer · Appui long sur un marqueur pour options';
+  c.appendChild(hint);
+
+  // Actions
+  const acts=document.createElement('div');acts.className='plan-acts';acts.style.flexShrink='0';
+  const ziBtn=document.createElement('button');ziBtn.className='pact';ziBtn.textContent='🔍+';
+  ziBtn.onclick=()=>{planState.zoom=Math.min(8,planState.zoom*1.35);planDraw();};
+  const zoBtn=document.createElement('button');zoBtn.className='pact';zoBtn.textContent='🔍−';
+  zoBtn.onclick=()=>{planState.zoom=Math.max(0.2,planState.zoom/1.35);planDraw();};
+  const zrBtn=document.createElement('button');zrBtn.className='pact';zrBtn.textContent='⊡';
+  zrBtn.onclick=()=>{planFitToScreen();planDraw();};
+  const rotBtn=document.createElement('button');rotBtn.className='pact';rotBtn.textContent='↻ 90°';
+  rotBtn.onclick=()=>{planState.rot=(planState.rot+90)%360;planFitToScreen();planDraw();};
+  if(!plan.markers.length){
+    const chgLabel=document.createElement('label');chgLabel.className='pact';
+    chgLabel.style.cssText='position:relative;overflow:hidden;cursor:pointer';chgLabel.textContent='✏️ Changer';
+    const ci=document.createElement('input');ci.type='file';ci.accept='image/*';
+    ci.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer';
+    ci.onchange=e=>{if(e.target.files[0])loadPlanFile(e.target.files[0]);};
+    chgLabel.appendChild(ci);acts.appendChild(chgLabel);
+  }
+  const pngBtn=document.createElement('button');pngBtn.className='pact';pngBtn.textContent='📷 PNG';pngBtn.onclick=exportPlanPNG;
+  acts.appendChild(ziBtn);acts.appendChild(zoBtn);acts.appendChild(zrBtn);acts.appendChild(rotBtn);acts.appendChild(pngBtn);
+  c.appendChild(acts);
+
+  // Liste marqueurs
+  const markerListDiv=document.createElement('div');
+  markerListDiv.id='plan-marker-list';
+  markerListDiv.style.cssText='flex-shrink:0;overflow-y:auto;max-height:160px;background:#fff;border-top:1px solid #EEF3F8';
+  c.appendChild(markerListDiv);
+
+  // Charger l'image et initialiser le canvas
+  const img=new Image();
+  img.onload=()=>{
+    planState.img=img;
+    planState.rot=planState.rot||0;
+    planFitToScreen();
+    planDraw();
+    initCanvasEvents(canvas,wrap,plan);
+    refreshPlanMarkerList();
+  };
+  img.src=plan.imgSrc;
+}
+
+function buildEqBar(bar){
+  if(!bar){bar=document.getElementById('peqbar');if(!bar)return;}
+  bar.innerHTML='';
+  allEq().filter(e=>e.cat===planActiveCat).forEach(eq=>{
+    const isSel=eq.id===planActiveEqId;
+    const meta=CAT[eq.cat]||{};
+    const btn=document.createElement('div');btn.className='peq'+(isSel?' sel':'');
+    btn.style.cssText=`border-color:${isSel?meta.color:'#DDE6EE'};background:${isSel?meta.bg:'#fff'};${isSel?'border-width:2px':''}`;
+    btn.innerHTML=`<div class="peq-em">${eq.emoji}</div><span class="peq-lb" style="color:${isSel?meta.color:'var(--ink)'}">${eq.label}</span>`;
+    btn.onclick=()=>{
+      planActiveEqId=eq.id;buildEqBar();updateHint();
+      addMarkerAtCenter(eq.id);
+    };
+    bar.appendChild(btn);
+  });
+  if(!allEq().filter(e=>e.cat===planActiveCat).length){
+    bar.innerHTML='<span style="font-size:12px;color:#AABBCC;padding:4px 8px">Aucun équipement dans cette catégorie</span>';
+  }
+}
+function refreshEqBar(){
+  const bar=document.getElementById('peqbar');
+  if(bar)buildEqBar(bar);
+  document.querySelectorAll('.pcb').forEach(b=>{
+    const m=CAT[b.dataset.cat]||{},on=b.dataset.cat===planActiveCat;
+    b.style.borderColor=on?m.color:'#DDE6EE';
+    b.style.background=on?m.color:m.light;
+    b.style.color=on?'#fff':m.color;
+  });
+}
+
+
+function updateHint(hint){
+  if(!hint)hint=document.getElementById('plan-hint');if(!hint)return;
+  hint.textContent='Choisissez un équipement pour le placer · Appui court = déplacer · Appui long = copier';
+}
+
+function addMarkerAtCenter(eqId){
+  const plan=curPlan();
+  const scroll=document.getElementById('plan-scroll');
+  const img=document.getElementById('plan-img');
+
+  let x=50, y=45; // défaut
+
+  if(scroll&&img&&img.naturalWidth){
+    // Calculer la position centrale visible en tenant compte du zoom/offset/rotation
+    const sr=scroll.getBoundingClientRect();
+    const cx=sr.left+sr.width/2;
+    const cy=sr.top+sr.height/2;
+    // Centre visible = centre du scroll = position 50,50 dans l'espace transformé
+    // On veut placer au centre de ce qui est visible
+    // Sans offset : c'est 50%,50% de l'image
+    // Avec offset : le centre visible est décalé
+    const natW=sr.width/planZoom;
+    const natH=img.naturalHeight/img.naturalWidth*natW;
+    // Offset en % image
+    const offXpct=-planOffsetX/planZoom/natW*100;
+    const offYpct=-planOffsetY/planZoom/natH*100;
+    x=Math.min(92,Math.max(8,50+offXpct));
+    y=Math.min(92,Math.max(8,50+offYpct));
+  }
+
+  const mk={id:uid(),eqId,x,y,note:''};
+  plan.markers.push(mk); sv();
+  const cw=document.getElementById('plan-cw');
+  if(cw) renderAllMk(cw,plan);
+  toast('Marqueur ajouté — appui long pour déplacer / modifier / copier');
+}
+
+function openMkModal(mkId){
+  editingMkId=mkId||null;
+  const plan=curPlan();let eq;
+  if(mkId){const m=plan.markers.find(x=>x.id===mkId);eq=eqById(m?.eqId);document.getElementById('m-mk-note').value=m?.note||'';}
+  else{eq=eqById(planActiveEqId);document.getElementById('m-mk-note').value='';}
+  if(eq){
+    document.getElementById('m-mk-em').textContent=eq.emoji;
+    document.getElementById('m-mk-lbl').textContent=eq.label;
+    document.getElementById('m-mk-cat').textContent=(CAT[eq.cat]||{}).label||'';
+  }
+  openM('m-mk');
+  setTimeout(()=>document.getElementById('m-mk-note').focus(),100);
+}
+
+function saveMk(){
+  const note=document.getElementById('m-mk-note').value.trim();
+  const plan=curPlan();
+  if(editingMkId){const m=plan.markers.find(x=>x.id===editingMkId);if(m)m.note=note;}
+  else if(pendingTap&&planActiveEqId){
+    plan.markers.push({id:uid(),eqId:planActiveEqId,x:pendingTap.x,y:pendingTap.y,note});
+  }
+  sv();closeM('m-mk');pendingTap=null;editingMkId=null;
+  planDraw();refreshPlanMarkerList();
+}
+
+function renderAllMk(cw,plan){planDraw();}
+
+// ── MENU CONTEXTUEL MARQUEUR ──────────────────────────────────────
+function openMkContextMenu(m,pin,cw,plan){
+  if(navigator.vibrate) navigator.vibrate(40);
+  pin.style.filter='drop-shadow(0 0 0 3px '+((CAT[eqById(m.eqId)?.cat]||{}).color||'#333')+') drop-shadow(0 4px 12px rgba(0,0,0,.5))';
+  document.querySelectorAll('.mk-ctx-menu').forEach(x=>x.remove());
+
+  const menu=document.createElement('div');
+  menu.className='mk-ctx-menu';
+  menu.style.cssText=`position:fixed;z-index:500;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.25),0 2px 8px rgba(0,0,0,.15);overflow:hidden;min-width:200px;animation:menuPop .15s ease-out`;
+
+  const eq=eqById(m.eqId)||{};
+  const meta=CAT[eq.cat]||{};
+  const ttl=document.createElement('div');
+  ttl.style.cssText=`display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #EEF3F8;background:${meta.bg||'#F8FAFC'}`;
+  ttl.innerHTML=`<span style="font-size:24px">${eq.emoji||'📍'}</span><span style="font-size:14px;font-weight:600;color:var(--ink)">${eq.label||'Marqueur'}</span>`;
+  menu.appendChild(ttl);
+
+  const items=[
+    {icon:'✏️', label:'Modifier la note', action:()=>{closeCtxMenu(menu,pin);openMkModal(m.id);}},
+    {icon:'↔️', label:'Repositionner',    action:()=>{closeCtxMenu(menu,pin);startTapReposition(m,cw,plan);}},
+    {icon:'⎘',  label:'Copier',           action:()=>{
+      closeCtxMenu(menu,pin);
+      const copy={id:uid(),eqId:m.eqId,x:Math.min(90,m.x+6),y:Math.min(90,m.y+6),note:m.note||''};
+      plan.markers.push(copy);sv();renderAllMk(cw,plan);
+      showTab('plan');toast('Marqueur copié ✓');
+    }},
+    {icon:'🗑', label:'Supprimer', action:()=>{
+      closeCtxMenu(menu,pin);
+      plan.markers=plan.markers.filter(x=>x.id!==m.id);sv();
+      showTab('plan');
+    }, danger:true},
+  ];
+
+  items.forEach(item=>{
+    const btn=document.createElement('button');
+    btn.style.cssText=`display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;border:none;background:transparent;font-size:14px;font-family:inherit;cursor:pointer;text-align:left;color:${item.danger?'var(--danger)':'var(--ink)'}`;
+    btn.innerHTML=`<span style="font-size:20px;width:28px;text-align:center">${item.icon}</span>${item.label}`;
+    btn.onclick=item.action;
+    btn.addEventListener('touchend',e=>{e.preventDefault();item.action();});
+    menu.appendChild(btn);
+  });
+
+  document.body.appendChild(menu);
+  const pr=pin.getBoundingClientRect();
+  const mw=menu.offsetWidth||200,mh=menu.offsetHeight||220;
+  const vw=window.innerWidth,vh=window.innerHeight;
+  let left=pr.left+pr.width/2-mw/2;
+  let top=pr.top-mh-8;
+  left=Math.max(8,Math.min(left,vw-mw-8));
+  top=top<8?pr.bottom+8:top;
+  menu.style.left=left+'px';menu.style.top=top+'px';
+
+  setTimeout(()=>{
+    const close=e=>{if(!menu.contains(e.target)){closeCtxMenu(menu,pin);document.removeEventListener('touchstart',close);document.removeEventListener('mousedown',close);}};
+    document.addEventListener('touchstart',close,{passive:true});
+    document.addEventListener('mousedown',close);
+  },100);
+}
+
+function closeCtxMenu(menu,pin){
+  menu.remove();
+  if(pin)pin.style.filter='drop-shadow(0 2px 6px rgba(0,0,0,.45))';
+}
+
+// ── DRAG MARQUEUR (activé depuis le menu) ────────────────────────
+// startTapReposition remplacé par repositionMode dans initCanvasEvents
+
+function loadPlanFile(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const plan=curPlan();
+    plan.imgSrc=e.target.result;
+    sv();planState.zoom=1;planState.rot=0;planState.panX=0;planState.panY=0;showTab('plan');toast('Plan importé ✓');
+    toast('Plan importé ✓');
+  };
+  reader.readAsDataURL(file);
+}
+
+function exportPlanPNG(){
+  const canvas=document.getElementById('plan-canvas');
+  if(!canvas||!planState.img){alert('Aucun plan chargé.');return;}
+  const plan=curPlan();const p=proj();
+  // Créer un canvas haute résolution
+  const sc=2;
+  const offCanvas=document.createElement('canvas');
+  offCanvas.width=canvas.width*sc;offCanvas.height=canvas.height*sc;
+  const ctx=offCanvas.getContext('2d');
+  ctx.scale(sc,sc);
+  // Fond blanc
+  ctx.fillStyle='#FFF';ctx.fillRect(0,0,canvas.width,canvas.height);
+  // Dessiner plan
+  ctx.save();
+  ctx.translate(planState.panX,planState.panY);
+  ctx.rotate(planState.rot*Math.PI/180);
+  ctx.scale(planState.zoom,planState.zoom);
+  const iw=planState.img.width,ih=planState.img.height;
+  ctx.drawImage(planState.img,-iw/2,-ih/2,iw,ih);
+  ctx.restore();
+  // Dessiner marqueurs
+  (plan.markers||[]).forEach(m=>{
+    const eq=eqById(m.eqId);if(!eq)return;
+    const meta=CAT[eq.cat]||{};
+    const px=planPctToCanvas(m.x,m.y);
+    drawMarker(ctx,px.x,px.y,eq,meta,false);
+  });
+  // Légende
+  const ly=canvas.height-26;
+  ctx.fillStyle='rgba(15,25,35,.82)';ctx.fillRect(0,ly,canvas.width,26);
+  ctx.font='bold 10px Arial';ctx.fillStyle='#FFF';ctx.textAlign='left';ctx.textBaseline='middle';
+  ctx.fillText(`Diag ERP · ${p.nom||'Projet'} · ${p.date||''} · ${plan.label} · ${plan.markers.length} marqueur(s)`,8,ly+13);
+  offCanvas.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;
+    a.download=`plan_${p.nom||'erp'}_${plan.label}_${p.date||'visite'}.png`;
+    a.click();URL.revokeObjectURL(url);toast('Plan exporté ✓');
+  },'image/png');
+}
+
+// ══════════════════════════════════════════════════════
+// BIBLIOTHÈQUE ÉQUIPEMENTS
+// ══════════════════════════════════════════════════════
+function renderBiblio(c){
+  const wrap=document.createElement('div');wrap.style.cssText='padding:12px';
+  const top=document.createElement('div');top.className='card';top.style.marginTop='0';
+  top.innerHTML=`<div style="padding:14px"><p style="font-size:13px;color:#8899AA;line-height:1.6;margin-bottom:12px">Ajoutez vos équipements — disponibles dans tous vos projets.<br><span style="font-size:11px">L'emoji 🔧 est attribué par défaut — modifiable ici au bureau.</span></p><button class="btn btn-p" style="width:100%;padding:12px" onclick="openAeqModal(null)">+ Ajouter un équipement</button></div>`;
+  wrap.appendChild(top);
+  Object.entries(CAT).forEach(([cat,meta])=>{
+    const equips=allEq().filter(e=>e.cat===cat);if(!equips.length)return;
+    const sec=document.createElement('div');sec.style.cssText='margin-top:18px';
+    const ht=document.createElement('div');
+    ht.style.cssText='display:flex;align-items:center;gap:8px;padding:0 0 10px';
+    ht.innerHTML=`<div style="width:10px;height:10px;border-radius:50%;background:${meta.color}"></div><span style="font-size:11px;font-weight:700;color:#8899AA;text-transform:uppercase;letter-spacing:.06em">${meta.label}</span>`;
+    sec.appendChild(ht);
+    const grid=document.createElement('div');grid.className='bib-grid';
+    equips.forEach(eq=>{
+      const isCust=!!customEquip.find(e=>e.id===eq.id);
+      const ov=loadEmojiOverrides();
+      const displayEmoji=ov[eq.id]||eq.emoji;
+      const card=document.createElement('div');card.className='bib-card';
+      if(isCust||ov[eq.id])card.style.borderColor=meta.color;
+      card.innerHTML=`<div class="bib-em">${displayEmoji}</div><div class="bib-lb">${eq.label}</div>`;
+      // Bouton modifier emoji sur TOUS les équipements
+      const eb=document.createElement('button');
+      eb.style.cssText='position:absolute;bottom:4px;right:4px;width:18px;height:18px;border-radius:4px;border:none;background:#E6F0FF;color:var(--accent);font-size:10px;cursor:pointer;padding:0;font-family:inherit';
+      eb.textContent='✏️';eb.title="Changer l'icône";
+      eb.onclick=e=>{e.stopPropagation();openEditEmojiModal(eq.id,eq.emoji,displayEmoji);};
+      eb.ontouchend=e=>{e.preventDefault();e.stopPropagation();openEditEmojiModal(eq.id,eq.emoji,displayEmoji);};
+      card.appendChild(eb);
+      if(isCust){
+        const db=document.createElement('button');
+        db.style.cssText='position:absolute;top:4px;right:4px;width:18px;height:18px;border-radius:50%;border:none;background:var(--danger-bg);color:var(--danger);font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit';
+        db.textContent='×';db.onclick=()=>deleteEquip(eq.id);
+        card.appendChild(db);
+      }
+      grid.appendChild(card);
+    });
+    sec.appendChild(grid);wrap.appendChild(sec);
+  });
+  c.appendChild(wrap);c.style.paddingBottom='20px';
+}
+
+function loadEmojiOverrides(){
+  try{const d=localStorage.getItem('erp_emoji_ov');return d?JSON.parse(d):{};}catch(e){return{};}
+}
+function saveEmojiOverride(eqId,emoji){
+  const ov=loadEmojiOverrides();ov[eqId]=emoji;
+  try{localStorage.setItem('erp_emoji_ov',JSON.stringify(ov));}catch(e){}
+}
+
+function openAeqModal(eqId){
+  editingEqId=eqId||null;
+  aeqEmoji='🔧';
+  const eq=eqId?customEquip.find(e=>e.id===eqId):null;
+  document.getElementById('aeq-title').textContent=eq?'Modifier l\'équipement':'Nouvel équipement';
+  document.getElementById('aeq-ok').textContent=eq?'Enregistrer':'Ajouter';
+  document.getElementById('aeq-name').value=eq?eq.label:'';
+  document.getElementById('aeq-cat').value=eq?eq.cat:'fire';
+  document.getElementById('aeq-ei').value='';
+  aeqEmoji=eq?eq.emoji:'🔧';
+  document.getElementById('aeq-big').textContent=aeqEmoji;
+  aeqSugg();aeqPreview();openM('m-aeq');
+  setTimeout(()=>document.getElementById('aeq-name').focus(),100);
+}
+
+function aeqSugg(){
+  const cat=document.getElementById('aeq-cat').value;
+  const g=document.getElementById('aeq-grid');g.innerHTML='';
+  (ESUGG[cat]||[]).forEach(em=>{
+    const b=document.createElement('div');b.className='eopt'+(em===aeqEmoji?' sel':'');b.textContent=em;
+    b.onclick=()=>{aeqEmoji=em;document.getElementById('aeq-ei').value='';document.getElementById('aeq-big').textContent=em;aeqSugg();aeqPreview();};
+    g.appendChild(b);
+  });
+}
+function aeqEmojiInput(){
+  const v=document.getElementById('aeq-ei').value.trim();
+  if(v){aeqEmoji=v;document.getElementById('aeq-big').textContent=v;aeqSugg();}
+  aeqPreview();
+}
+function aeqPreview(){
+  const name=document.getElementById('aeq-name').value||'—';
+  const cat=document.getElementById('aeq-cat').value;
+  const meta=CAT[cat]||{};
+  document.getElementById('aeq-prev-b').style.background=meta.bg||'#F3F4F6';
+  document.getElementById('aeq-prev-b').textContent=aeqEmoji;
+  document.getElementById('aeq-prev-l').textContent=name;
+}
+function openEditEmojiModal(eqId,defaultEmoji,currentEmoji){
+  document.querySelectorAll('.edit-emoji-modal').forEach(x=>x.remove());
+  const eq=allEq().find(e=>e.id===eqId)||{};
+  const isCust=!!customEquip.find(e=>e.id===eqId);
+  const modal=document.createElement('div');
+  modal.className='mback edit-emoji-modal show';
+  const esugg=(ESUGG[eq.cat]||[]).map(em=>`<div class="eopt${em===currentEmoji?' sel':''}" onclick="this.parentNode.querySelectorAll('.eopt').forEach(x=>x.classList.remove('sel'));this.classList.add('sel');document.getElementById('eem-inp').value='${em}';document.getElementById('eem-big').textContent='${em}'">${em}</div>`).join('');
+  modal.innerHTML=`<div class="mbox"><h3>Changer l'icône — ${eq.label||''}</h3>
+    <div class="mf"><label>Nouvel emoji</label>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <div id="eem-big" style="font-size:38px;width:50px;text-align:center">${currentEmoji}</div>
+        <input id="eem-inp" type="text" maxlength="2" placeholder="Coller un emoji…"
+          style="flex:1;font-size:22px;text-align:center;padding:9px;border:1px solid #DDE6EE;border-radius:var(--rs);font-family:inherit"
+          oninput="document.getElementById('eem-big').textContent=this.value.trim()||'${currentEmoji}'">
+      </div>
+      <div style="font-size:11px;color:#8899AA;margin-bottom:6px">Suggestions :</div>
+      <div class="egrid">${esugg}</div>
+    </div>
+    <div class="macts">
+      <button class="mbcancel" onclick="this.closest('.edit-emoji-modal').remove()">Annuler</button>
+      <button class="mbok" onclick="applyEmojiChange('${eqId}','${isCust}')">Enregistrer</button>
+    </div>
+  </div>`;
+  modal.onclick=e=>{if(e.target===modal)modal.remove();};
+  document.body.appendChild(modal);
+  setTimeout(()=>document.getElementById('eem-inp')?.focus(),100);
+}
+function applyEmojiChange(eqId,isCust){
+  const inp=document.getElementById('eem-inp');
+  const big=document.getElementById('eem-big');
+  const emoji=(inp?.value.trim())||big?.textContent;
+  if(!emoji||emoji.length===0){alert('Choisissez un emoji.');return;}
+  saveEmojiOverride(eqId,emoji);
+  if(isCust==='true'){const eq=customEquip.find(e=>e.id===eqId);if(eq)eq.emoji=emoji;svEq();}
+  document.querySelectorAll('.edit-emoji-modal').forEach(x=>x.remove());
+  const c=document.getElementById('content');
+  if(c&&currentTab==='biblio')renderBiblio(c);
+  planDraw();
+  toast('Icône mise à jour ✓');
+}
+function saveEquip(){
+  const name=document.getElementById('aeq-name').value.trim();
+  if(!name){alert('Donnez un nom.');return;}
+  const cat=document.getElementById('aeq-cat').value;
+  if(editingEqId){
+    const eq=customEquip.find(e=>e.id===editingEqId);
+    if(eq){eq.label=name;eq.cat=cat;eq.emoji=aeqEmoji;}
+  } else {
+    customEquip.push({id:uid(),cat,emoji:aeqEmoji,label:name});
+  }
+  svEq();closeM('m-aeq');
+  renderBiblio(document.getElementById('content'));
+  toast(editingEqId?'Équipement mis à jour ✓':'Équipement ajouté ✓');
+}
+function deleteEquip(id){
+  if(!confirm('Supprimer ?'))return;
+  customEquip=customEquip.filter(e=>e.id!==id);svEq();
+  renderBiblio(document.getElementById('content'));toast('Supprimé');
+}
+
+// ══════════════════════════════════════════════════════
+// CONFIGURATION DU DIAGNOSTIC
+// ══════════════════════════════════════════════════════
+function renderConfig(c){
+  const cfg=getPSEC();
+  const wrap=document.createElement('div');wrap.style.cssText='padding:12px';
+  const intro=document.createElement('div');intro.className='card';intro.style.marginTop='0';
+  intro.innerHTML=`<div style="padding:14px"><h3 style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:8px">Configuration du diagnostic</h3><p style="font-size:13px;color:#8899AA;line-height:1.6;margin-bottom:12px">Personnalisez les sections et champs de chaque pièce.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-p" onclick="openAddSec(null)">+ Nouvelle section</button><button class="btn btn-s" onclick="resetCfg()">↺ Réinitialiser</button></div></div>`;
+  wrap.appendChild(intro);
+  cfg.forEach((sec,si)=>{
+    const secCard=document.createElement('div');secCard.className='cfg-sec';
+    const sh=document.createElement('div');sh.className='cfg-sec-head';
+    sh.innerHTML=`<span style="font-size:20px">${sec.icon||'📋'}</span><span style="flex:1;font-size:14px;font-weight:600;color:var(--ink)">${sec.title||''}</span>`;
+    const btns=document.createElement('div');btns.style.cssText='display:flex;gap:4px';
+    if(si>0){const u=document.createElement('button');u.className='del-b';u.title='Monter';u.textContent='↑';u.onclick=()=>{const c2=getPSEC();[c2[si-1],c2[si]]=[c2[si],c2[si-1]];savePSEC(c2);renderConfig(document.getElementById('content'));};btns.appendChild(u);}
+    if(si<cfg.length-1){const d2=document.createElement('button');d2.className='del-b';d2.title='Descendre';d2.textContent='↓';d2.onclick=()=>{const c2=getPSEC();[c2[si],c2[si+1]]=[c2[si+1],c2[si]];savePSEC(c2);renderConfig(document.getElementById('content'));};btns.appendChild(d2);}
+    const ed=document.createElement('button');ed.className='del-b';ed.style.cssText='color:var(--accent);border-color:#BDD7EE';ed.title='Modifier';ed.textContent='✏️';
+    ed.onclick=()=>openAddSec(si);btns.appendChild(ed);
+    const dl=document.createElement('button');dl.className='del-b';dl.style.cssText='color:var(--danger);border-color:#FECACA';dl.title='Supprimer';dl.textContent='🗑';
+    dl.onclick=()=>{if(!confirm('Supprimer cette section ?'))return;const c2=getPSEC();c2.splice(si,1);savePSEC(c2);renderConfig(document.getElementById('content'));toast('Section supprimée');};
+    btns.appendChild(dl);sh.appendChild(btns);secCard.appendChild(sh);
+    // Champs
+    const fieldsDiv=document.createElement('div');
+    (sec.fields||[]).forEach((f,fi)=>{
+      const fr=document.createElement('div');fr.className='cfg-field-row';
+      const typeIcon={'select':'📋','textarea':'📝','number':'🔢','text':'✍️'}[f.type]||'📝';
+      fr.innerHTML=`<span style="font-size:14px;flex-shrink:0">${typeIcon}</span><span style="flex:1;font-size:13px;color:var(--ink)">${f.label||''}</span><span style="font-size:11px;color:#AABBCC;background:#F4F6F8;padding:2px 6px;border-radius:4px">${f.type}</span>`;
+      const db=document.createElement('button');db.className='del-b';db.textContent='×';
+      db.onclick=()=>{const c2=getPSEC();c2[si].fields.splice(fi,1);savePSEC(c2);renderConfig(document.getElementById('content'));};
+      fr.appendChild(db);fieldsDiv.appendChild(fr);
+    });
+    const addF=document.createElement('button');
+    addF.style.cssText='display:flex;align-items:center;gap:6px;padding:8px 14px;background:transparent;border:none;font-size:13px;color:var(--accent);cursor:pointer;font-family:inherit;width:100%';
+    addF.innerHTML='<span style="width:20px;height:20px;border-radius:50%;border:1.5px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:300;flex-shrink:0">+</span> Ajouter un champ';
+    addF.onclick=()=>{addingFieldSecIdx=si;document.getElementById('field-label').value='';document.getElementById('field-type').value='textarea';document.getElementById('field-opts').value='';document.getElementById('field-opts-wrap').style.display='none';openM('m-field');setTimeout(()=>document.getElementById('field-label').focus(),100);};
+    fieldsDiv.appendChild(addF);secCard.appendChild(fieldsDiv);wrap.appendChild(secCard);
+  });
+  c.appendChild(wrap);c.style.paddingBottom='20px';
+}
+
+let _editingSecIdx=null;
+function openAddSec(si){
+  _editingSecIdx=si;
+  const cfg=getPSEC();
+  const sec=si!==null?cfg[si]:null;
+  document.getElementById('m-sec-title').textContent=sec?'Modifier la section':'Nouvelle section';
+  document.getElementById('sec-ok').textContent=sec?'Enregistrer':'Créer';
+  document.getElementById('sec-icon').value=sec?sec.icon:'';
+  document.getElementById('sec-title').value=sec?sec.title:'';
+  openM('m-sec');setTimeout(()=>document.getElementById('sec-icon').focus(),100);
+}
+function saveSec(){
+  const icon=document.getElementById('sec-icon').value.trim()||'📋';
+  const title=document.getElementById('sec-title').value.trim();
+  if(!title){alert('Donnez un titre.');return;}
+  const cfg=getPSEC();
+  if(_editingSecIdx!==null&&_editingSecIdx>=0){
+    cfg[_editingSecIdx].icon=icon;cfg[_editingSecIdx].title=title;
+  } else {
+    cfg.push({id:'s'+Date.now(),icon,title,fields:[]});
+  }
+  savePSEC(cfg);closeM('m-sec');renderConfig(document.getElementById('content'));toast('Section sauvegardée ✓');
+}
+function saveField(){
+  const label=document.getElementById('field-label').value.trim();
+  if(!label){alert('Donnez un libellé.');return;}
+  const type=document.getElementById('field-type').value;
+  const cfg=getPSEC();
+  const field={id:'f'+Date.now(),label,type};
+  if(type==='select'){
+    const raw=document.getElementById('field-opts').value;
+    field.opts=[''].concat(raw.split('\n').map(o=>o.trim()).filter(Boolean));
+  }
+  if(type==='number')field.step='0.1';
+  cfg[addingFieldSecIdx].fields.push(field);
+  savePSEC(cfg);closeM('m-field');renderConfig(document.getElementById('content'));toast('Champ ajouté ✓');
+}
+function resetCfg(){
+  if(!confirm('Réinitialiser la configuration ?'))return;
+  localStorage.removeItem('erp_cfg');
+  renderConfig(document.getElementById('content'));toast('Configuration réinitialisée ✓');
+}
+
+// ══════════════════════════════════════════════════════
+// EXPORT CSV
+// ══════════════════════════════════════════════════════
+function renderExport(c){
+  const card=document.createElement('div');card.className='card';
+  card.innerHTML=`<div style="padding:14px"><h3 style="font-size:14px;font-weight:700;color:var(--ink);margin-bottom:12px">Export CSV — logiciel de chiffrage</h3><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px"><button class="btn btn-p" onclick="genCSV()">Générer</button><button class="btn btn-s" onclick="copyCSV()">Copier</button><button class="btn btn-s" onclick="dlCSV()">Télécharger</button></div><div style="font-size:11px;color:#8899AA;margin-bottom:8px">Séparateur ; · UTF-8 · compatible Excel</div><textarea class="csv-pre" id="csv-out" readonly placeholder="Cliquez sur Générer…"></textarea></div>`;
+  c.appendChild(card);c.style.paddingBottom='20px';
+}
+function buildCSV(){
+  const p=proj(),eff=effectif(),cat=categorie(eff),{total,vente}=calcSurfs();
+  const e=v=>'"'+String(v||'').replace(/"/g,'""')+'"';
+  const L=['SEP=;'];
+  [['Projet',p.nom],["Maître d'ouvrage",p.mo],['Adresse',p.adresse],['Date',p.date],
+   ['MOE',p.moe],['Phase',p.phase],['Type ERP',p.activite],['Surface totale m²',total],
+   ['Surface zone vente m²',vente],['Effectif ERP',eff],['Catégorie ERP',cat],['HSP m',p.hsp],
+  ].forEach(([k,v])=>L.push([e(k),e(v)].join(';')));
+  // Pièces
+  L.push('');
+  L.push(['PIÈCE','Section','Champ','Valeur'].map(e).join(';'));
+  p.pieces.filter(x=>!x._deleted).forEach(piece=>{
+    getPSEC().forEach(sec=>{
+      const data=(piece.data&&piece.data[sec.id])||{};
+      (sec.fields||[]).forEach(f=>{
+        const v=data[f.id]||'';if(!v)return;
+        L.push([e(piece.label),e(sec.title),e(f.label),e(v)].join(';'));
+      });
+    });
+  });
+  // Risques
+  L.push('');
+  L.push(['RISQUES','Observation','Coché'].map(e).join(';'));
+  (p.risques||[]).forEach(r=>{if(!r.label&&!r.etat)return;L.push([e(r.label),e(r.etat),e(r.checked?'Oui':'Non')].join(';'));});
+  // Plans
+  (p.plans||[]).forEach(pl=>{
+    if(!(pl.markers||[]).length)return;
+    L.push('');
+    L.push([`PLAN — ${pl.label}`,'Catégorie','Icône','Équipement','X %','Y %','Note'].map(e).join(';'));
+    pl.markers.forEach(m=>{
+      const eq=eqById(m.eqId)||{};
+      L.push([e(pl.label),e((CAT[eq.cat]||{}).label),e(eq.emoji),e(eq.label),e(m.x?.toFixed(1)),e(m.y?.toFixed(1)),e(m.note)].join(';'));
+    });
+  });
+  return L.join('\n');
+}
+function genCSV(){const csv=buildCSV();const el=document.getElementById('csv-out');if(el)el.value=csv;return csv;}
+function copyCSV(){navigator.clipboard.writeText(genCSV()).then(()=>toast('Copié ✓'));}
+function dlCSV(){
+  const csv=genCSV(),p=proj();
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`${p.nom||'diag'}_${p.date||'visite'}.csv`;
+  a.click();URL.revokeObjectURL(url);toast('Téléchargé ✓');
+}
+
+// ══════════════════════════════════════════════════════
+// ROTATION DU PLAN
+// ══════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════
+// MOTEUR PLAN — CANVAS 2D
+// ══════════════════════════════════════════════════════
+const planState={img:null,zoom:1,rot:0,panX:0,panY:0};
+let repositionMode=false, repositionMarkerId=null, showMarkers=true;
+
+function planFitToScreen(){
+  const wrap=document.getElementById('plan-wrap');
+  const canvas=document.getElementById('plan-canvas');
+  if(!wrap||!canvas||!planState.img)return;
+  const W=wrap.clientWidth||canvas.clientWidth||300;
+  const H=wrap.clientHeight||canvas.clientHeight||400;
+  canvas.width=W; canvas.height=H;
+  const iw=planState.rot%180===0?planState.img.width:planState.img.height;
+  const ih=planState.rot%180===0?planState.img.height:planState.img.width;
+  planState.zoom=Math.min(W/iw, H/ih)*0.95;
+  planState.panX=W/2;
+  planState.panY=H/2;
+}
+
+function planDraw(){
+  const canvas=document.getElementById('plan-canvas');
+  const wrap=document.getElementById('plan-wrap');
+  if(!canvas||!planState.img)return;
+  const W=wrap?wrap.clientWidth:canvas.width;
+  const H=wrap?wrap.clientHeight:canvas.height;
+  if(canvas.width!==W||canvas.height!==H){canvas.width=W;canvas.height=H;}
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  // Translation au point de pan + rotation + scale
+  ctx.translate(planState.panX, planState.panY);
+  ctx.rotate(planState.rot*Math.PI/180);
+  ctx.scale(planState.zoom, planState.zoom);
+  // Dessiner l'image centrée
+  const iw=planState.img.width, ih=planState.img.height;
+  ctx.drawImage(planState.img,-iw/2,-ih/2,iw,ih);
+  ctx.restore();
+
+  // Dessiner les marqueurs
+  const plan=curPlan();
+  (plan.markers||[]).forEach(m=>{
+    const eq=eqById(m.eqId);if(!eq)return;
+    const meta=CAT[eq.cat]||{};
+    // En mode repositionnement : afficher seulement le marqueur déplacé
+    if(!showMarkers && m.id!==repositionMarkerId) return;
+    // Convertir % → pixels canvas
+    const px=planPctToCanvas(m.x,m.y);
+    drawMarker(ctx,px.x,px.y,eq,meta,m.id===repositionMarkerId);
+  });
+
+  // Mode repositionnement : afficher une croix cible
+  if(repositionMode){
+    ctx.strokeStyle='rgba(0,102,204,0.6)';
+    ctx.lineWidth=1;
+    ctx.setLineDash([4,4]);
+    for(let x=0;x<W;x+=60){{ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}}
+    for(let y=0;y<H;y+=60){{ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}}
+    ctx.setLineDash([]);
+  }
+}
+
+function drawMarker(ctx,x,y,eq,meta,isActive){
+  const r=14;
+  // Ombre
+  ctx.save();
+  ctx.shadowColor='rgba(0,0,0,0.4)';ctx.shadowBlur=8;ctx.shadowOffsetY=3;
+  // Cercle fond
+  ctx.beginPath();ctx.arc(x,y-r,r,0,Math.PI*2);
+  ctx.fillStyle=meta.bg||'#EEE';ctx.fill();
+  ctx.strokeStyle=isActive?'#0066CC':(meta.color||'#333');
+  ctx.lineWidth=isActive?4:3;ctx.stroke();
+  ctx.restore();
+  // Emoji
+  ctx.font=`${r}px serif`;ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText(eq.emoji,x,y-r);
+  // Pointe
+  ctx.beginPath();ctx.moveTo(x-8,y-3);ctx.lineTo(x+8,y-3);ctx.lineTo(x,y+8);ctx.closePath();
+  ctx.fillStyle=isActive?'#0066CC':(meta.color||'#333');ctx.fill();
+  // Label
+  if(eq.label){
+    const fs=11;ctx.font=`bold ${fs}px Arial`;ctx.textAlign='center';
+    const tw=ctx.measureText(eq.label).width+10;
+    ctx.fillStyle='rgba(15,25,35,.85)';
+    ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x-tw/2,y+10,tw,16,3);else ctx.rect(x-tw/2,y+10,tw,16);ctx.fill();
+    ctx.fillStyle='#fff';ctx.textBaseline='top';ctx.fillText(eq.label,x,y+12);
+  }
+}
+
+// Conversion % image → pixels canvas
+function planPctToCanvas(pctX,pctY){
+  const img=planState.img;if(!img)return{x:0,y:0};
+  // Position dans l'espace image centré (avant rotation)
+  const ix=(pctX/100-0.5)*img.width;
+  const iy=(pctY/100-0.5)*img.height;
+  // Appliquer rotation
+  const rad=planState.rot*Math.PI/180;
+  const cos=Math.cos(rad),sin=Math.sin(rad);
+  const rx=ix*cos-iy*sin;
+  const ry=ix*sin+iy*cos;
+  // Appliquer zoom et pan
+  return{x:planState.panX+rx*planState.zoom, y:planState.panY+ry*planState.zoom};
+}
+
+// Conversion pixels canvas → % image
+function canvasToPlanPct(cx,cy){
+  const img=planState.img;if(!img)return{x:50,y:50};
+  // Retirer pan
+  let dx=cx-planState.panX;
+  let dy=cy-planState.panY;
+  // Retirer zoom
+  dx/=planState.zoom;dy/=planState.zoom;
+  // Retirer rotation
+  const rad=-planState.rot*Math.PI/180;
+  const cos=Math.cos(rad),sin=Math.sin(rad);
+  const rx=dx*cos-dy*sin;
+  const ry=dx*sin+dy*cos;
+  // Convertir en %
+  return{
+    x:Math.min(97,Math.max(3,(rx/img.width+0.5)*100)),
+    y:Math.min(97,Math.max(3,(ry/img.height+0.5)*100))
+  };
+}
+
+// Trouver le marqueur sous un point canvas
+function findMarkerAt(cx,cy,plan){
+  const HIT=28; // rayon de détection en pixels canvas
+  let best=null,bestDist=HIT*HIT;
+  (plan.markers||[]).forEach(m=>{
+    const p=planPctToCanvas(m.x,m.y);
+    const d=(cx-p.x)**2+(cy-(p.y-22))**2;
+    if(d<bestDist){bestDist=d;best=m;}
+  });
+  return best;
+}
+
+function initCanvasEvents(canvas,wrap,plan){
+  // UN DOIGT = PAN UNIQUEMENT
+  // ZOOM + ROTATION = BOUTONS SEULEMENT
+  // Pas de pinch, pas de complexité
+
+  let panning=false;
+  let panSX=0,panSY=0,panSOX=0,panSOY=0;
+  let longTimer=null, touchStartX=0,touchStartY=0,touchMoved=false;
+
+  const canvasXY=(clientX,clientY)=>{
+    const r=canvas.getBoundingClientRect();
+    return{
+      x:(clientX-r.left)*(canvas.width/r.width),
+      y:(clientY-r.top)*(canvas.height/r.height)
+    };
+  };
+
+  // ── TOUCH ─────────────────────────────────────────────────────
+  canvas.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    // Ignorer si plus d'un doigt (éviter tout crash pinch)
+    if(e.touches.length>1) return;
+    const t=e.touches[0];
+    const pt=canvasXY(t.clientX,t.clientY);
+    touchStartX=t.clientX; touchStartY=t.clientY; touchMoved=false;
+
+    // Mode repositionnement : tap = placer ici
+    if(repositionMode){
+      const pos=canvasToPlanPct(pt.x,pt.y);
+      const m=plan.markers.find(x=>x.id===repositionMarkerId);
+      if(m){m.x=pos.x;m.y=pos.y;sv();}
+      exitRepositionMode(); planDraw();
+      refreshPlanMarkerList();
+      toast('Position mise à jour ✓');
+      return;
+    }
+
+    // Démarrer pan
+    panning=true;
+    panSX=t.clientX; panSY=t.clientY;
+    panSOX=planState.panX; panSOY=planState.panY;
+
+    // Appui long sur marqueur = menu
+    const mk=findMarkerAt(pt.x,pt.y,plan);
+    if(mk){
+      longTimer=setTimeout(()=>{
+        if(!touchMoved){
+          panning=false;
+          if(navigator.vibrate)navigator.vibrate(40);
+          openMkContextMenu(mk,canvas,plan);
+        }
+      },500);
+    }
+  },{passive:false});
+
+  canvas.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(e.touches.length>1||!panning) return;
+    const t=e.touches[0];
+    const dx=t.clientX-touchStartX;
+    const dy=t.clientY-touchStartY;
+    if(Math.abs(dx)>6||Math.abs(dy)>6){
+      touchMoved=true;
+      clearTimeout(longTimer);
+    }
+    planState.panX=panSOX+(t.clientX-panSX);
+    planState.panY=panSOY+(t.clientY-panSY);
+    planDraw();
+  },{passive:false});
+
+  canvas.addEventListener('touchend',e=>{
+    e.preventDefault();
+    clearTimeout(longTimer);
+    panning=false;
+  },{passive:false});
+
+  // ── SOURIS (desktop) ──────────────────────────────────────────
+  let md=false,mmX=0,mmY=0,mmOX=0,mmOY=0,mmMoved=false;
+
+  canvas.addEventListener('mousedown',e=>{
+    const pt=canvasXY(e.clientX,e.clientY);
+    if(repositionMode){
+      const pos=canvasToPlanPct(pt.x,pt.y);
+      const m=plan.markers.find(x=>x.id===repositionMarkerId);
+      if(m){m.x=pos.x;m.y=pos.y;sv();}
+      exitRepositionMode();planDraw();
+      refreshPlanMarkerList();
+      toast('Position mise à jour ✓');
+      return;
+    }
+    md=true;mmMoved=false;
+    mmX=e.clientX;mmY=e.clientY;
+    mmOX=planState.panX;mmOY=planState.panY;
+    canvas.style.cursor='grabbing';
+  });
+
+  window.addEventListener('mousemove',e=>{
+    if(!md)return;
+    if(Math.abs(e.clientX-mmX)>3||Math.abs(e.clientY-mmY)>3)mmMoved=true;
+    planState.panX=mmOX+(e.clientX-mmX);
+    planState.panY=mmOY+(e.clientY-mmY);
+    planDraw();
+  });
+
+  window.addEventListener('mouseup',e=>{
+    if(!md)return;
+    md=false;
+    canvas.style.cursor=repositionMode?'crosshair':'grab';
+    if(!mmMoved){
+      const pt=canvasXY(e.clientX,e.clientY);
+      const mk=findMarkerAt(pt.x,pt.y,plan);
+      if(mk)openMkContextMenu(mk,canvas,plan);
+    }
+  });
+
+  canvas.addEventListener('wheel',e=>{
+    e.preventDefault();
+    planState.zoom=Math.min(8,Math.max(0.2,planState.zoom*(e.deltaY>0?0.9:1.1)));
+    planDraw();
+  },{passive:false});
+}
+
+function refreshPlanMarkerList(){
+  const plan=curPlan();
+  const listDiv=document.getElementById('plan-marker-list');
+  if(!listDiv)return;
+  listDiv.innerHTML='';
+  if(!plan.markers.length){listDiv.style.display='none';return;}
+  listDiv.style.display='block';
+  const title=document.createElement('div');
+  title.style.cssText='font-size:11px;font-weight:700;color:#8899AA;text-transform:uppercase;letter-spacing:.06em;padding:8px 12px 4px';
+  title.textContent=`${plan.markers.length} marqueur${plan.markers.length>1?'s':''} — ${plan.label}`;
+  listDiv.appendChild(title);
+  (plan.markers||[]).forEach(m=>{
+    const eq=eqById(m.eqId);if(!eq)return;
+    const meta=CAT[eq.cat]||{};
+    const item=document.createElement('div');
+    item.style.cssText='display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid #F0F4F8';
+    item.innerHTML=`<div style="font-size:18px;flex-shrink:0">${eq.emoji}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;color:var(--ink)">${eq.label}</div>${m.note?`<div style="font-size:11px;color:#8899AA;margin-top:2px">${m.note}</div>`:''}</div><div style="width:8px;height:8px;border-radius:50%;background:${meta.color};flex-shrink:0"></div>`;
+    const db=document.createElement('button');db.className='del-b';db.textContent='×';
+    db.onclick=()=>{plan.markers=plan.markers.filter(x=>x.id!==m.id);sv();planDraw();refreshPlanMarkerList();};
+    db.ontouchend=e=>{e.preventDefault();db.onclick();};
+    item.appendChild(db);listDiv.appendChild(item);
+  });
+}
+
+function exitRepositionMode(){
+  repositionMode=false;repositionMarkerId=null;showMarkers=true;
+  const banner=document.getElementById('reposition-banner');
+  if(banner)banner.classList.remove('show');
+  const canvas=document.getElementById('plan-canvas');
+  if(canvas)canvas.style.cursor='grab';
+}
+
+function addMarkerAtCenter(eqId){
+  const plan=curPlan();
+  const mk={id:uid(),eqId,x:50,y:45,note:''};
+  plan.markers.push(mk);sv();planDraw();
+  toast('Marqueur ajouté · Appui long pour options');
+}
+
+function openMkContextMenu(m,canvas,plan){
+  document.querySelectorAll('.mk-ctx-menu').forEach(x=>x.remove());
+  const eq=eqById(m.eqId)||{};
+  const meta=CAT[eq.cat]||{};
+  const menu=document.createElement('div');
+  menu.className='mk-ctx-menu';
+  menu.style.cssText='position:fixed;z-index:500;background:#fff;border-radius:14px;box-shadow:0 8px 32px rgba(0,0,0,.25);overflow:hidden;min-width:200px;animation:menuPop .15s ease-out';
+  const ttl=document.createElement('div');
+  ttl.style.cssText=`display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #EEF3F8;background:${meta.bg||'#F8FAFC'}`;
+  ttl.innerHTML=`<span style="font-size:24px">${eq.emoji||'📍'}</span><span style="font-size:14px;font-weight:600;color:var(--ink)">${eq.label||''}</span>`;
+  menu.appendChild(ttl);
+  const items=[
+    {icon:'✏️',label:'Modifier la note',action:()=>{closeCtxMenu(menu,null);openMkModal(m.id);}},
+    {icon:'↔️',label:'Repositionner',action:()=>{
+      closeCtxMenu(menu,null);
+      repositionMode=true;repositionMarkerId=m.id;showMarkers=false;
+      // Afficher le bandeau
+      let banner=document.getElementById('reposition-banner');
+      if(!banner){
+        banner=document.createElement('div');banner.id='reposition-banner';
+        banner.innerHTML=`<span>${eq.emoji} Tapez l'emplacement exact sur le plan</span><button id="cancel-repo" style="background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 14px;border-radius:20px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer">Annuler</button>`;
+        document.body.appendChild(banner);
+      }
+      banner.classList.add('show');
+      document.getElementById('cancel-repo').onclick=()=>{exitRepositionMode();planDraw();};
+      document.getElementById('cancel-repo').ontouchend=e=>{e.preventDefault();exitRepositionMode();planDraw();};
+      if(canvas)canvas.style.cursor='crosshair';
+      planDraw();
+    }},
+    {icon:'⎘',label:'Copier',action:()=>{
+      closeCtxMenu(menu,null);
+      const copy={id:uid(),eqId:m.eqId,x:Math.min(90,m.x+5),y:Math.min(90,m.y+5),note:m.note||''};
+      plan.markers.push(copy);sv();planDraw();
+      refreshPlanMarkerList();toast('Copié ✓');
+    }},
+    {icon:'🗑',label:'Supprimer',action:()=>{
+      closeCtxMenu(menu,null);
+      plan.markers=plan.markers.filter(x=>x.id!==m.id);sv();planDraw();refreshPlanMarkerList();
+    },danger:true},
+  ];
+  items.forEach(item=>{
+    const btn=document.createElement('button');
+    btn.style.cssText=`display:flex;align-items:center;gap:12px;width:100%;padding:13px 16px;border:none;background:transparent;font-size:14px;font-family:inherit;cursor:pointer;color:${item.danger?'var(--danger)':'var(--ink)'}`;
+    btn.innerHTML=`<span style="font-size:20px;width:28px;text-align:center">${item.icon}</span>${item.label}`;
+    btn.onclick=item.action;btn.ontouchend=e=>{e.preventDefault();item.action();};
+    menu.appendChild(btn);
+  });
+  document.body.appendChild(menu);
+  // Positionner près du marqueur
+  const px=planPctToCanvas(m.x,m.y);
+  const cr=canvas.getBoundingClientRect();
+  const scaleX=cr.width/canvas.width;
+  const sx=cr.left+px.x*scaleX;
+  const sy=cr.top+(px.y-22)*cr.height/canvas.height;
+  const mw=menu.offsetWidth||200,mh=menu.offsetHeight||220;
+  const vw=window.innerWidth,vh=window.innerHeight;
+  let left=sx-mw/2,top=sy-mh-8;
+  left=Math.max(8,Math.min(left,vw-mw-8));top=top<8?sy+30:top;
+  menu.style.left=left+'px';menu.style.top=top+'px';
+  setTimeout(()=>{
+    const close=e=>{if(!menu.contains(e.target)){closeCtxMenu(menu,null);document.removeEventListener('touchstart',close);document.removeEventListener('mousedown',close);}};
+    document.addEventListener('touchstart',close,{passive:true});document.addEventListener('mousedown',close);
+  },100);
+}
+
+function closeCtxMenu(menu,pin){menu.remove();}
+
+
+// ══════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════
+document.getElementById('nav').addEventListener('click',e=>{
+  const tab=e.target.closest('.ntab')?.dataset?.tab;
+  if(tab)showTab(tab);
+});
+loadAll();updateTopbar();showTab('identification');
+// Afficher bandeau installation si pas standalone et pas déjà rejeté
+(function(){
+  const isStandalone=window.navigator.standalone||window.matchMedia('(display-mode:standalone)').matches;
+  const dismissed=localStorage.getItem('ib_dismissed');
+  if(!isStandalone&&!dismissed){
+    document.getElementById('install-banner').classList.add('show');
+  }
+})();
+</script>
+</body>
+</html>
